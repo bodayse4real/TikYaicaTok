@@ -14,8 +14,9 @@
     {
       "id": "creator",
       "users": [
+        "7641005374748869648"
       ],
-      "colour": "FC7D17",
+      "image": "assets/creator.png",
       "title": "TikYaicaTok",
       "text": "Creator of TikYaicaTok (@npnserious)",
       "text_ru": "Создатель TikYaicaTok (@npnserious)",
@@ -30,7 +31,6 @@
         "7551880794956989495"
       ],
       "image": "assets/narezany_badge.png",
-      "colour": "FC7D17",
       "title": "Нарезанный",
       "text": "Нарезанный",
       "text_ru": "Нарезанный",
