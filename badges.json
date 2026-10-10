@@ -29,11 +29,12 @@
       "users": [
         "7551880794956989495"
       ],
-      "colour": "8DD1B0",
-      "title": "MargyT",
-      "text": "The owner of Margy and MargyT",
-      "text_ru": "Владелец Margy и MargyT",
-      "text_uk": "Власник Margy і MargyT",
+      "image": "assets/narezany_badge.png",
+      "colour": "FC7D17",
+      "title": "Нарезанный",
+      "text": "Нарезанный",
+      "text_ru": "Нарезанный",
+      "text_uk": "Нарізаний",
       "button": "Got it",
       "button_ru": "Понятно",
       "button_uk": "Зрозуміло"

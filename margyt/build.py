@@ -502,6 +502,7 @@ class Build:
         ("govno", "че за говно"),
         ("glamour", "Гламурная"),
         ("creator", "Создатель (@npnserious)"),
+        ("narezany", "Нарезанный (@narezany)"),
     ]
 
     ICON_PACKAGE = 0x30
