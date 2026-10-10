@@ -19,8 +19,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
-        prog="margyt",
-        description="Build MargyT from an official TikTok apk.",
+        prog="tikyaicatok",
+        description="Build TikYaicaTok from an official TikTok apk.",
     )
     parser.add_argument("apk", nargs="?",
                         help="a universal TikTok apk (type APK, not BUNDLE)")
@@ -31,7 +31,7 @@ def main(argv=None) -> int:
                         help="the TikTok account ids to give it to")
     parser.add_argument("--no-push", action="store_true",
                         help="with --badge: edit badges.json but do not push it")
-    parser.add_argument("-o", "--out", default=os.path.join(ROOT, "build", "margyt.apk"),
+    parser.add_argument("-o", "--out", default=os.path.join(ROOT, "build", "tikyaicatok.apk"),
                         help="where the finished apk goes")
     parser.add_argument("--work", default=os.path.join(ROOT, "work"),
                         help="scratch space for the dex files being rewritten")

@@ -258,7 +258,7 @@ public final class Textures {
     public static File export(Context context, boolean withXml) {
         try {
             String apk = context.getApplicationInfo().sourceDir;
-            File out = new File(downloads(), "margyt-" + Version.TIKTOK
+            File out = new File(downloads(), "tikyaicatok-" + Version.TIKTOK
                     + (withXml ? "-full" : "") + KIND);
             File parent = out.getParentFile();
             if (parent != null) parent.mkdirs();
@@ -346,7 +346,7 @@ public final class Textures {
     private static File downloads() {
         File folder = android.os.Environment.getExternalStoragePublicDirectory(
                 android.os.Environment.DIRECTORY_DOWNLOADS);
-        return new File(folder, "MargyT");
+        return new File(folder, "TikYaicaTok");
     }
 
     // --------------------------------------------------------- swapping one in

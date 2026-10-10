@@ -16,7 +16,7 @@ final class Text {
     private static final boolean RU = "ru".equals(language()) || "be".equals(language());
     private static final boolean UK = "uk".equals(language());
 
-    static final String ROW = pick("Настройки MargyT", "Налаштування MargyT", "MargyT settings");
+    static final String ROW = pick("Настройки TikYaicaTok", "Налаштування TikYaicaTok", "TikYaicaTok settings");
 
     static final String REGION = pick("Регион", "Регіон", "Region");
 
@@ -156,15 +156,15 @@ final class Text {
             "Тестовая сборка", "Тестова збірка", "A test build");
 
     static final String TEST_TEXT = pick(
-            "Это тестовая сборка MargyT — она только для тех, кто поддержал "
+            "Это тестовая сборка TikYaicaTok — она только для тех, кто поддержал "
                     + "разработку. Настройки мода откроются на аккаунте со значком "
                     + "поддержавшего; TikTok работает как обычно. Если значка нет, "
                     + "поставьте обычную версию с сайта.",
-            "Це тестова збірка MargyT — вона лише для тих, хто підтримав "
+            "Це тестова збірка TikYaicaTok — вона лише для тих, хто підтримав "
                     + "розробку. Налаштування мода відкриються на акаунті зі значком "
                     + "того, хто підтримав; TikTok працює як завжди. Якщо значка "
                     + "немає, встановіть звичайну версію з сайту.",
-            "This is a test build of MargyT, and it is for the people who paid "
+            "This is a test build of TikYaicaTok, and it is for the people who paid "
                     + "for the work. The mod's settings open on an account with the "
                     + "supporter badge; TikTok itself works as usual. Without the "
                     + "badge, install the ordinary version from the site.");
@@ -192,9 +192,9 @@ final class Text {
     static final String GRADIENT = pick("Градиент на ник", "Градієнт на нік", "Name gradient");
 
     static final String GRADIENT_NOTE = pick(
-            "Ник в градиенте видят все, у кого стоит MargyT. Менять можно раз в минуту.",
-            "Нік у градієнті бачать усі, у кого стоїть MargyT. Міняти можна раз на хвилину.",
-            "Everyone running MargyT sees it. Changing is allowed once a minute.");
+            "Ник в градиенте видят все, у кого стоит TikYaicaTok. Менять можно раз в минуту.",
+            "Нік у градієнті бачать усі, у кого стоїть TikYaicaTok. Міняти можна раз на хвилину.",
+            "Everyone running TikYaicaTok sees it. Changing is allowed once a minute.");
 
     static final String GRADIENT_ONLY = pick(
             "Только для поддержавших разработку",
@@ -392,9 +392,9 @@ final class Text {
     static final String BANNER = pick("Баннер профиля", "Банер профілю", "Profile banner");
 
     static final String BANNER_NOTE = pick(
-            "Картинка сверху профиля, её видят все с MargyT. До 5 МБ, менять раз в пять минут.",
-            "Картинка зверху профілю, її бачать усі з MargyT. До 5 МБ, міняти раз на п'ять хвилин.",
-            "A picture across the top of your profile, seen by everyone on MargyT. "
+            "Картинка сверху профиля, её видят все с TikYaicaTok. До 5 МБ, менять раз в пять минут.",
+            "Картинка зверху профілю, її бачать усі з TikYaicaTok. До 5 МБ, міняти раз на п'ять хвилин.",
+            "A picture across the top of your profile, seen by everyone on TikYaicaTok. "
                     + "5 MB at most, changed once every five minutes.");
 
     static final String BANNER_RULES = pick(
@@ -507,12 +507,12 @@ final class Text {
 
     static final String DONATE_BANNER_TEXT = pick(
             "От 250 ₽: значок рядом с ником, градиент на ник, баннер в профиле "
-                    + "и закрытый чат. Значок, градиент и баннер видят все с MargyT.",
+                    + "и закрытый чат. Значок, градиент и баннер видят все с TikYaicaTok.",
             "Від 250 ₽: значок поруч із ніком, градієнт на нік, банер у профілі "
-                    + "та закритий чат. Значок, градієнт і банер бачать усі з MargyT.",
+                    + "та закритий чат. Значок, градієнт і банер бачать усі з TikYaicaTok.",
             "From 250 roubles: a badge beside your name, a gradient on the name, "
                     + "a banner on your profile and the private chat. The badge, "
-                    + "the gradient and the banner are seen by everyone on MargyT.");
+                    + "the gradient and the banner are seen by everyone on TikYaicaTok.");
 
     static final String DONATE_BANNER_HOW = pick(
             "После перевода — в сообщения канала: чек и ваш ID аккаунта.",
@@ -527,7 +527,7 @@ final class Text {
             "Сообщения каналу", "Повідомлення каналу", "Message the channel");
 
     static final String REMIND_TITLE = pick(
-            "Нравится MargyT?", "Подобається MargyT?", "Enjoying MargyT?");
+            "Нравится TikYaicaTok?", "Подобається TikYaicaTok?", "Enjoying TikYaicaTok?");
 
     static final String REMIND_TEXT = pick(
             "Поддержи разработку — значок рядом с ником, градиент на ник, "
@@ -607,16 +607,16 @@ final class Text {
             "Heavier, and most of it cannot be edited by hand");
 
     static final String TEXTURES_EXPORT_NOTE = pick(
-            "Файл .margytex со всеми картинками сборки, в Downloads/MargyT",
-            "Файл .margytex з усіма картинками збірки, у Downloads/MargyT",
-            "A .margytex of every picture in this build, into Downloads/MargyT");
+            "Файл .margytex со всеми картинками сборки, в Downloads/TikYaicaTok",
+            "Файл .margytex з усіма картинками збірки, у Downloads/TikYaicaTok",
+            "A .margytex of every picture in this build, into Downloads/TikYaicaTok");
 
     static final String TEXTURES_EXPORTING = pick(
             "Собираю текстуры", "Збираю текстури", "Writing the textures out");
 
     static final String TEXTURES_EXPORTED = pick(
-            "Готово, файл в Downloads/MargyT", "Готово, файл у Downloads/MargyT",
-            "Done -- the file is in Downloads/MargyT");
+            "Готово, файл в Downloads/TikYaicaTok", "Готово, файл у Downloads/TikYaicaTok",
+            "Done -- the file is in Downloads/TikYaicaTok");
 
     static final String TEXTURES_INSTALL = pick(
             "Загрузить текстурпак", "Завантажити текстурпак", "Add a texture pack");

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build MargyT from an official TikTok apk.
+# Build TikYaicaTok from an official TikTok apk.
 #
 #   ./build.sh path/to/tiktok.apk
 #

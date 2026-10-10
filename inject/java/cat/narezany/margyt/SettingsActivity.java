@@ -150,7 +150,7 @@ public class SettingsActivity extends Activity {
     private void rebuild() {
         column.removeAllViews();
         column.addView(backArrow());
-        column.addView(title("MargyT"));
+        column.addView(title("TikYaicaTok"));
 
         if (Badges.freeStillOpen() && !Mine.hasFree()) column.addView(freeBanner());
         column.addView(donateBanner());
@@ -1904,7 +1904,7 @@ public class SettingsActivity extends Activity {
         // the author and the licence live here as well: the licence asks that
         // a fork keep this line and the card that asks for support, rather
         // than moving the name into print nobody reads
-        view.setText("MargyT " + Version.MOD + "  ·  TikTok " + Version.TIKTOK
+        view.setText("TikYaicaTok " + Version.MOD + " (based on MargyT)  ·  TikTok " + Version.TIKTOK
                 + "\n" + Text.MADE_BY);
         view.setTextColor(skin.muted());
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
@@ -2356,12 +2356,12 @@ public class SettingsActivity extends Activity {
 
     private void copyDiary() {
         try {
-            StringBuilder out = new StringBuilder("MargyT\n");
+            StringBuilder out = new StringBuilder("TikYaicaTok\n");
             List<String> lines = Diary.lines();
             for (String line : lines) out.append(line).append('\n');
             ClipboardManager clipboard =
                     (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-            clipboard.setPrimaryClip(ClipData.newPlainText("MargyT", out.toString()));
+            clipboard.setPrimaryClip(ClipData.newPlainText("TikYaicaTok", out.toString()));
             Toast.makeText(this, Text.COPIED, Toast.LENGTH_SHORT).show();
         } catch (Throwable error) {
             Toast.makeText(this, String.valueOf(error), Toast.LENGTH_LONG).show();

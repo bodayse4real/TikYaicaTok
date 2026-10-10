@@ -32,12 +32,12 @@ STARTUP_PROVIDER = PACKAGE + ".MargyProvider"
 # builds the list -- but the screen has to still be called this for the mod to
 # recognise it, so the build checks rather than hopes.
 TIKTOK_SETTINGS = "com.ss.android.ugc.aweme.setting.ui.SettingContainerActivity"
-LABEL = "MargyT"
+LABEL = "TikYaicaTok"
 
 # The screen has no launcher entry of its own -- it is opened from the row in
 # TikTok's settings -- but an activity still wants a label: it is what the
 # recents card and any "open with" list show.
-SETTINGS_LABEL = "MargyT settings"
+SETTINGS_LABEL = "TikYaicaTok settings"
 SETTINGS_THEME = "Theme_DeviceDefault_Light_NoActionBar"
 
 # what a renamed provider authority ends in, so two mods of the same app can
