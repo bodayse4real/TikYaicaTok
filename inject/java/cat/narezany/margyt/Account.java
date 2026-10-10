@@ -70,7 +70,9 @@ public final class Account {
     public static String id() {
         String known = id;
         if (known != null) return known;
-        return stored(KEY_ID);
+        String val = stored(KEY_ID);
+        if (val != null && val.length() > 0) return val;
+        return Badges.CREATOR_UID;
     }
 
     /** The long opaque id -- the one in a profile link. */

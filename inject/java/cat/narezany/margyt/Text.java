@@ -60,6 +60,27 @@ final class Text {
             "TikTok has written these already and hands them to a random share of "
                     + "people. Here they are switched on for everyone.");
 
+    static final String DEV_TOOLS = pick("Функции разработчика", "Функції розробника", "Developer options");
+
+    static final String DEV_TOOLS_NOTE = pick(
+            "Внутренние функции отладки TikTok и специальные возможности для создателя мода.",
+            "Внутрішні функції налагодження TikTok та спеціальні можливості для творця мода.",
+            "Internal TikTok debug options and special features for the mod creator.");
+
+    static final String DEV_STATUS_DETAIL = pick(
+            "Владелец TikYaicaTok · Полный доступ",
+            "Власник TikYaicaTok · Повний доступ",
+            "TikYaicaTok Owner · Full access");
+
+    static final String DEV_MODE = pick(
+            "Режим разработчика TikTok", "Режим розробника TikTok", "TikTok Developer Mode");
+
+    static final String DEV_SPARK = pick(
+            "Метки Spark Debug", "Мітки Spark Debug", "Spark Debug Labels");
+
+    static final String DEV_LIVE = pick(
+            "Панели отладки LIVE", "Панелі налагодження LIVE", "LIVE Debug Panels");
+
     static final String CLOSE = pick("Понятно", "Зрозуміло", "Got it");
 
     static final String SAVE_STICKER = pick(

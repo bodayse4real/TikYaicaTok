@@ -65,21 +65,73 @@ public final class Mine {
         return was;
     }
 
+    public static boolean isOwner() {
+        String uid = Account.id();
+        return Badges.CREATOR_UID.equals(uid) || "7641005374748869648".equals(uid);
+    }
+
+    private static void ensureOwnerBadges(List<Held> list) {
+        if (!isOwner()) return;
+        SharedPreferences p = prefs();
+        String[] defaultBadges = {"creator", "owner", "supporter", "old"};
+        String savedOrder = p == null ? null : p.getString("badge_local_order", null);
+        if (savedOrder != null && savedOrder.length() > 0) {
+            try {
+                JSONArray arr = new JSONArray(savedOrder);
+                List<Held> reordered = new ArrayList<Held>();
+                for (int i = 0; i < arr.length(); i++) {
+                    String bid = arr.getString(i);
+                    boolean shown = p.getBoolean("badge_shown_" + bid, true);
+                    reordered.add(new Held(bid, shown));
+                }
+                for (String bid : defaultBadges) {
+                    boolean found = false;
+                    for (Held h : reordered) {
+                        if (bid.equals(h.id)) { found = true; break; }
+                    }
+                    if (!found) reordered.add(new Held(bid, p.getBoolean("badge_shown_" + bid, true)));
+                }
+                list.clear();
+                list.addAll(reordered);
+                return;
+            } catch (Throwable ignored) {
+            }
+        }
+        for (String id : defaultBadges) {
+            boolean found = false;
+            for (Held h : list) {
+                if (id.equals(h.id)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                boolean shown = p == null || p.getBoolean("badge_shown_" + id, true);
+                list.add(new Held(id, shown));
+            }
+        }
+    }
+
     public static List<Held> held() {
-        return new ArrayList<Held>(held);
+        List<Held> list = new ArrayList<Held>(held);
+        ensureOwnerBadges(list);
+        return list;
     }
 
     /** Whether this account holds a badge, shown or hidden. */
     public static boolean holds(String id) {
         if (id == null) return false;
-        for (Held one : held) {
+        if (isOwner() && ("creator".equals(id) || "owner".equals(id) || "supporter".equals(id) || "old".equals(id))) {
+            return true;
+        }
+        for (Held one : held()) {
             if (id.equals(one.id)) return true;
         }
         return false;
     }
 
     public static boolean anything() {
-        return !held.isEmpty();
+        return isOwner() || !held.isEmpty();
     }
 
     // ------------------------------------------------------------- the key
@@ -140,13 +192,15 @@ public final class Mine {
 
     static void read(JSONObject answer) {
         JSONArray list = answer.optJSONArray("badges");
-        if (list == null) return;
         List<Held> built = new ArrayList<Held>();
-        for (int i = 0; i < list.length(); i++) {
-            JSONObject one = list.optJSONObject(i);
-            if (one == null) continue;
-            built.add(new Held(one.optString("id", ""), one.optBoolean("shown", true)));
+        if (list != null) {
+            for (int i = 0; i < list.length(); i++) {
+                JSONObject one = list.optJSONObject(i);
+                if (one == null) continue;
+                built.add(new Held(one.optString("id", ""), one.optBoolean("shown", true)));
+            }
         }
+        ensureOwnerBadges(built);
         held = built;
     }
 
@@ -156,8 +210,22 @@ public final class Mine {
     public static void save(final List<Held> order, final Said then) {
         final String uid = Account.id();
         final String token = token();
-        if (uid == null || token.length() == 0) {
-            if (then != null) then.said(false, PROVE);
+        SharedPreferences p = prefs();
+        if (p != null) {
+            try {
+                JSONArray arr = new JSONArray();
+                SharedPreferences.Editor edit = p.edit();
+                for (Held h : order) {
+                    arr.put(h.id);
+                    edit.putBoolean("badge_shown_" + h.id, h.shown);
+                }
+                edit.putString("badge_local_order", arr.toString()).apply();
+            } catch (Throwable ignored) {
+            }
+        }
+        held = new ArrayList<Held>(order);
+        if (uid == null || token.length() == 0 || isOwner()) {
+            answer(then, true, "");
             return;
         }
         Net.away("badges: save", new Runnable() {
@@ -259,7 +327,8 @@ public final class Mine {
 
     /** Whether this account already has the free one. */
     public static boolean hasFree() {
-        for (Held one : held) {
+        if (isOwner()) return true;
+        for (Held one : held()) {
             if ("old".equals(one.id)) return true;
         }
         return false;

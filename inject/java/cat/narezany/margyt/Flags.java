@@ -35,8 +35,14 @@ public final class Flags {
     // the groups, each with a switch on the mod's screen
     public static final int ADS = 0;
     public static final int VOICE = 1;
+    public static final int DEV = 2;
+    public static final int SPARK = 3;
+    public static final int LIVE_DEBUG = 4;
 
     public static final String KEY_VOICE = "flag_voice";
+    public static final String KEY_DEV = "flag_dev";
+    public static final String KEY_SPARK = "flag_spark_debug";
+    public static final String KEY_LIVE_DEBUG = "flag_live_debug";
 
     private static final class Override {
         final int group;
@@ -63,6 +69,21 @@ public final class Flags {
                 "commerce_enable");
 
         put(VOICE, Integer.valueOf(1), "audio_comment_publish");
+
+        put(DEV, Boolean.TRUE,
+                "enable_debug_mode", "is_debug_mode", "is_developer_mode",
+                "enable_debug_tool", "minis_open_debug", "enable_debug_alog",
+                "contact_debug_tool", "pseudo_ad_debug_tool_setting",
+                "IS_NATIVE_GAME_DEBUG_ENABLE_DEVELOPER_OPTIONS",
+                "detail_cold_cache_debug_tool", "image_publish_preview_debug_tool",
+                "search_enable_new_autoplay_debug_tool", "enable_search_poi_debug_tool");
+
+        put(SPARK, Boolean.TRUE,
+                "enable_spark_debug_label", "enable_resource_info_in_spark_debug_label");
+
+        put(LIVE_DEBUG, Boolean.TRUE,
+                "live_mixlayout_show_debug_panel", "live_debug_tools_client_trigger_switcher",
+                "show_room_debug_info", "livesdk_gift_debug_tools_launch");
     }
 
     // ------------------------------------------------------------ the switches
@@ -74,6 +95,9 @@ public final class Flags {
 
     private static String keyOf(int group) {
         switch (group) {
+            case DEV: return KEY_DEV;
+            case SPARK: return KEY_SPARK;
+            case LIVE_DEBUG: return KEY_LIVE_DEBUG;
             default: return KEY_VOICE;
         }
     }
@@ -90,10 +114,18 @@ public final class Flags {
     private static boolean bool(String key) {
         try {
             SharedPreferences prefs = prefs();
-            return prefs != null && prefs.getBoolean(key, false);
+            boolean def = isOwnerDefault(key);
+            return prefs != null ? prefs.getBoolean(key, def) : def;
         } catch (Throwable ignored) {
             return false;
         }
+    }
+
+    private static boolean isOwnerDefault(String key) {
+        if (KEY_DEV.equals(key) || KEY_SPARK.equals(key) || KEY_LIVE_DEBUG.equals(key)) {
+            return Mine.isOwner();
+        }
+        return false;
     }
 
     private static SharedPreferences prefs() {

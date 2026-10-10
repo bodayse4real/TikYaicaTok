@@ -43,7 +43,11 @@ public final class Gradient {
             if (arr.length() < 2) return null;
             int[] out = new int[arr.length()];
             for (int i = 0; i < arr.length(); i++) {
-                out[i] = (int) Long.parseLong(arr.getString(i), 16);
+                try {
+                    out[i] = arr.getInt(i);
+                } catch (Throwable e) {
+                    out[i] = (int) Long.parseLong(arr.getString(i), 16);
+                }
             }
             return out;
         } catch (Throwable ignored) {
@@ -53,11 +57,11 @@ public final class Gradient {
 
     public static void saveLocal(List<Integer> colours) {
         android.content.Context context = Margy.context();
-        if (context == null) return;
+        if (context == null || colours == null) return;
         try {
             JSONArray arr = new JSONArray();
             for (Integer c : colours) {
-                arr.put(Integer.toHexString(c));
+                arr.put(c.intValue());
             }
             context.getSharedPreferences(Margy.PREFS, android.content.Context.MODE_PRIVATE)
                     .edit().putString(KEY_LOCAL_GRADIENT, arr.toString()).apply();

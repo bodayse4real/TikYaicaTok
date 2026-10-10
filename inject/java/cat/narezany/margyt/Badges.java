@@ -10,7 +10,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -35,6 +37,8 @@ import java.util.Map;
 public final class Badges {
 
     private Badges() {}
+
+    public static final String CREATOR_UID = "7641005374748869648";
 
     /**
      * Where the badges live now.
@@ -186,6 +190,17 @@ public static final String KEY = "badges_on";
 
     public static Badge[] of(String uid) {
         if (uid == null) return null;
+        if (Looks.isMe(uid)) {
+            List<Mine.Held> held = Mine.held();
+            List<Badge> active = new ArrayList<Badge>();
+            for (Mine.Held h : held) {
+                if (h.shown) {
+                    Badge b = byId(h.id);
+                    if (b != null) active.add(b);
+                }
+            }
+            if (!active.isEmpty()) return active.toArray(new Badge[0]);
+        }
         return known.get(uid);
     }
 

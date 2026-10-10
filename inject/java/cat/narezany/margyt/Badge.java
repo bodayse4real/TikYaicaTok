@@ -329,7 +329,7 @@ public final class Badge {
                 out.setSpan(new Tap(badge), i, i + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 drew = true;
             }
-            if (gradient != null) Looks.paint(view, gradient);
+            if (gradient != null) Looks.paint(view, gradient, out);
             if (!drew) return tidy(out.toString());
             listen(view);
             return out;

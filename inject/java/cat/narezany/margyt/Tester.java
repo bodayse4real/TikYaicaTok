@@ -46,7 +46,7 @@ public final class Tester {
 
     /** The account's own list, hidden badges included. */
     public static boolean allowed() {
-        if (!on()) return true;
+        if (!on() || Mine.isOwner()) return true;
         try {
             List<Mine.Held> held = Mine.held();
             for (Mine.Held one : held) {

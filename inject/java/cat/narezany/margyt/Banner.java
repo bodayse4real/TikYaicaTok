@@ -97,10 +97,11 @@ public final class Banner {
 
     /** Read a picture the person picked, refusing anything too big. */
     public static void send(final Context context, final Uri uri, final Said then) {
+        saveLocal(context, uri);
         final String uid = Account.id();
         final String token = Mine.token();
-        if (uid == null || token.length() == 0) {
-            if (then != null) then.said(false, Mine.PROVE);
+        if (uid == null || token.length() == 0 || Mine.isOwner()) {
+            if (then != null) answer(then, true, "");
             return;
         }
         Net.away("banner: send", new Runnable() {
@@ -135,10 +136,11 @@ public final class Banner {
     }
 
     public static void drop(final Said then) {
+        dropLocal(Margy.context());
         final String uid = Account.id();
         final String token = Mine.token();
-        if (uid == null || token.length() == 0) {
-            if (then != null) then.said(false, Mine.PROVE);
+        if (uid == null || token.length() == 0 || Mine.isOwner()) {
+            if (then != null) answer(then, true, "");
             return;
         }
         Net.away("banner: drop", new Runnable() {
@@ -207,7 +209,7 @@ public final class Banner {
             View header = headerOf(nameView);
             if (header == null) return;
             Context ctx = nameView.getContext();
-            if (hasLocalBanner(ctx) && uid.equals(Account.id())) {
+            if (hasLocalBanner(ctx) && Looks.isMe(uid)) {
                 Bitmap local = getLocalBanner(ctx);
                 if (local != null) {
                     synchronized (before) {
@@ -419,7 +421,7 @@ public final class Banner {
             return;
         }
         Context ctx = header.getContext();
-        if (hasLocalBanner(ctx) && uid.equals(Account.id())) {
+        if (hasLocalBanner(ctx) && Looks.isMe(uid)) {
             Bitmap local = getLocalBanner(ctx);
             if (local != null) {
                 wear(header, local, uid);

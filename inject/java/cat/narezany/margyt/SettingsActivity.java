@@ -498,9 +498,46 @@ public class SettingsActivity extends Activity {
         }
         column.addView(wrap(diary));
 
+        column.addView(section(Text.DEV_TOOLS));
+        LinearLayout dev = card();
+        dev.addView(ownerStatusRow());
+        dev.addView(line());
+        dev.addView(toggleRow("bug_report", Text.DEV_MODE, Flags.isOn(Flags.KEY_DEV), on -> {
+            Flags.set(Flags.KEY_DEV, on);
+            markChanged();
+        }));
+        dev.addView(line());
+        dev.addView(toggleRow("layers", Text.DEV_SPARK, Flags.isOn(Flags.KEY_SPARK), on -> {
+            Flags.set(Flags.KEY_SPARK, on);
+            markChanged();
+        }));
+        dev.addView(line());
+        dev.addView(toggleRow("live_tv", Text.DEV_LIVE, Flags.isOn(Flags.KEY_LIVE_DEBUG), on -> {
+            Flags.set(Flags.KEY_LIVE_DEBUG, on);
+            markChanged();
+        }));
+        column.addView(wrap(dev));
+        column.addView(caption(Text.DEV_TOOLS_NOTE));
+
         column.addView(versions());
 
         showRestartBar();
+    }
+
+    private View ownerStatusRow() {
+        LinearLayout row = row();
+        row.setPadding(dp(16), 0, dp(16), 0);
+        row.addView(icon("verified_user"));
+
+        LinearLayout text = new LinearLayout(this);
+        text.setOrientation(LinearLayout.VERTICAL);
+        text.addView(label("@npnserious"));
+        text.addView(detail(Text.DEV_STATUS_DETAIL));
+        row.addView(text, grow());
+
+        Badges.Badge b = Badges.byId("creator");
+        if (b != null) row.addView(badgeDot(b));
+        return sized(row, 60);
     }
 
     /**
@@ -1287,16 +1324,16 @@ public class SettingsActivity extends Activity {
     private LinearLayout bannerCard() {
         LinearLayout card = card();
         card.addView(actionRow("wallpaper", Text.BANNER_PICK, null, this::pickBanner));
-        if (Looks.hasBanner(Account.id())) {
+        boolean hasBanner = Looks.hasBanner(Account.id()) || Banner.hasLocalBanner(this);
+        if (hasBanner) {
             card.addView(line());
             card.addView(actionRow("block", Text.BANNER_OFF, null, () -> {
                 Banner.dropLocal(this);
                 Banner.drop((ok, trouble) -> {});
+                markChanged();
                 Popup.show(this, Text.BANNER, Text.GRADIENT_SAVED, Text.TEST_CLOSE);
                 rebuild();
             }));
-        }
-        if (Looks.hasBanner(Account.id())) {
             card.addView(line());
             card.addView(slider(Text.BANNER_DIM, Banner.dim(), 90, value ->
                     Banner.setDim(value, (ok, trouble) -> {
@@ -1362,11 +1399,13 @@ public class SettingsActivity extends Activity {
         card.addView(line());
         card.addView(actionRow("star", Text.GRADIENT_SAVE, null, () -> Gradient.save(
                 gradientColours, (ok, trouble) -> {
+                    markChanged();
                     Popup.show(this, Text.GRADIENT,
                             Text.GRADIENT_SAVED, Text.TEST_CLOSE);
                 })));
         card.addView(actionRow("visibility_off", Text.GRADIENT_OFF, null, () -> Gradient.drop(
                 (ok, trouble) -> {
+                    markChanged();
                     Popup.show(this, Text.GRADIENT,
                             Text.GRADIENT_SAVED, Text.TEST_CLOSE);
                 })));
