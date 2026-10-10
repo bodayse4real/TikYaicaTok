@@ -501,6 +501,7 @@ class Build:
         ("tigr", "айй тигрр"),
         ("govno", "че за говно"),
         ("glamour", "Гламурная"),
+        ("creator", "Создатель (@npnserious)"),
     ]
 
     ICON_PACKAGE = 0x30

@@ -59,6 +59,7 @@ public class SettingsActivity extends Activity {
     private static final String CHANNEL = "https://t.me/margytiktok";
     private static final String FORUM = "https://t.me/margeletforum";
     private static final String OWNER_TELEGRAM = "https://t.me/narezany";
+    private static final String CREATOR_TIKTOK = "https://www.tiktok.com/@npnserious";
 
     /** Where a receipt goes: the channel's own messages, not somebody's inbox. */
     private static final String CHANNEL_WRITE = "https://t.me/margytiktok?direct";
@@ -2128,6 +2129,7 @@ public class SettingsActivity extends Activity {
         rows.setPadding(0, dp(6), 0, dp(10));
 
         rows.addView(quiet(Text.THANKS_NOTE));
+        rows.addView(person("@npnserious", "Создатель TikYaicaTok", CREATOR_TIKTOK));
         rows.addView(owner());
         rows.addView(person("Claude Opus 5", Text.THANKS_CLAUDE, null));
         rows.addView(person("апрель14", Text.THANKS_HELPER, HELPER));
