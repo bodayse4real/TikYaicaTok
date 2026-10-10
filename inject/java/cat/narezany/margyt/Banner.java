@@ -44,6 +44,55 @@ public final class Banner {
         void said(boolean ok, String trouble);
     }
 
+    private static volatile Bitmap localBitmap;
+
+    public static boolean hasLocalBanner(Context context) {
+        if (context == null) context = Margy.context();
+        if (context == null) return false;
+        File f = new File(context.getFilesDir(), "margyt/banners/local_banner.jpg");
+        return f.exists() && f.length() > 0;
+    }
+
+    public static Bitmap getLocalBanner(Context context) {
+        if (localBitmap != null) return localBitmap;
+        if (context == null) context = Margy.context();
+        if (context == null) return null;
+        File f = new File(context.getFilesDir(), "margyt/banners/local_banner.jpg");
+        if (!f.exists()) return null;
+        byte[] blob = Net.read(f);
+        if (blob == null) return null;
+        localBitmap = decode(blob);
+        return localBitmap;
+    }
+
+    public static boolean saveLocal(Context context, Uri uri) {
+        try {
+            byte[] blob = read(context, uri);
+            if (blob == null || blob.length == 0) return false;
+            File dir = new File(context.getFilesDir(), "margyt/banners");
+            dir.mkdirs();
+            File dest = new File(dir, "local_banner.jpg");
+            Net.save(dest, blob);
+            localBitmap = decode(blob);
+            return true;
+        } catch (Throwable error) {
+            Diary.note("banner save local: " + error);
+            return false;
+        }
+    }
+
+    public static void dropLocal(Context context) {
+        try {
+            if (context == null) context = Margy.context();
+            if (context != null) {
+                File f = new File(context.getFilesDir(), "margyt/banners/local_banner.jpg");
+                if (f.exists()) f.delete();
+            }
+            localBitmap = null;
+        } catch (Throwable ignored) {
+        }
+    }
+
     // ------------------------------------------------------------- sending
 
     /** Read a picture the person picked, refusing anything too big. */
@@ -157,6 +206,17 @@ public final class Banner {
         try {
             View header = headerOf(nameView);
             if (header == null) return;
+            Context ctx = nameView.getContext();
+            if (hasLocalBanner(ctx) && uid.equals(Account.id())) {
+                Bitmap local = getLocalBanner(ctx);
+                if (local != null) {
+                    synchronized (before) {
+                        if (!before.containsKey(header)) before.put(header, header.getBackground());
+                    }
+                    wear(header, local, uid);
+                    return;
+                }
+            }
             String address = Looks.banner(uid);
             if (address == null) {
                 restore(header);
@@ -165,47 +225,55 @@ public final class Banner {
             synchronized (before) {
                 if (!before.containsKey(header)) before.put(header, header.getBackground());
             }
-            picture(nameView.getContext(), uid, address, header);
+            picture(ctx, uid, address, header);
         } catch (Throwable error) {
             Diary.note("banner: " + error);
         }
     }
 
+    private static final String KEY_LOCAL_DIM = "banner_local_dim";
+
     /**
      * How dark your own banner is drawn, for everyone who sees it.
-     *
-     * Kept on the server beside the picture, because it is part of how the
-     * banner looks rather than a preference of whoever is looking at it.
      */
     public static int dim() {
+        try {
+            Context context = Margy.context();
+            if (context != null) {
+                int local = context.getSharedPreferences(Margy.PREFS, Context.MODE_PRIVATE)
+                        .getInt(KEY_LOCAL_DIM, -1);
+                if (local >= 0) return local;
+            }
+        } catch (Throwable ignored) {
+        }
         return Looks.bannerDim(Account.id());
     }
 
     public static void setDim(final int how, final Said then) {
+        try {
+            Context context = Margy.context();
+            if (context != null) {
+                context.getSharedPreferences(Margy.PREFS, Context.MODE_PRIVATE)
+                        .edit().putInt(KEY_LOCAL_DIM, Math.max(0, Math.min(90, how))).apply();
+            }
+        } catch (Throwable ignored) {
+        }
         final String uid = Account.id();
         final String token = Mine.token();
-        if (uid == null || token.length() == 0) {
-            if (then != null) then.said(false, Mine.PROVE);
-            return;
-        }
-        Net.away("banner: dim", new Runnable() {
-            @Override
-            public void run() {
-                boolean ok = false;
-                String trouble = Text.BANNER_REFUSED;
-                try {
-                    Net.Said said = Net.talk(Badges.SERVER + "/shade",
-                            new org.json.JSONObject().put("uid", uid).put("token", token)
-                                    .put("dim", Math.max(0, Math.min(90, how))).toString());
-                    ok = said.ok();
-                    if (ok) Badges.refresh();
-                    else if (Mine.asksForProof(said)) trouble = Mine.PROVE;
-                } catch (Throwable error) {
-                    Diary.note("banner: " + error);
+        if (uid != null && token.length() > 0) {
+            Net.away("banner: dim", new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Net.talk(Badges.SERVER + "/shade",
+                                new org.json.JSONObject().put("uid", uid).put("token", token)
+                                        .put("dim", Math.max(0, Math.min(90, how))).toString());
+                    } catch (Throwable ignored) {
+                    }
                 }
-                answer(then, ok, ok ? "" : trouble);
-            }
-        });
+            });
+        }
+        answer(then, true, "");
     }
 
     /** How heavy the shadow under text on a banner is, nought to a hundred. */
@@ -350,6 +418,14 @@ public final class Banner {
             standingFor = null;
             return;
         }
+        Context ctx = header.getContext();
+        if (hasLocalBanner(ctx) && uid.equals(Account.id())) {
+            Bitmap local = getLocalBanner(ctx);
+            if (local != null) {
+                wear(header, local, uid);
+                return;
+            }
+        }
         if (!Looks.hasBanner(uid)) {
             restore(header);
             standing = null;
@@ -357,7 +433,7 @@ public final class Banner {
             return;
         }
         String address = Looks.banner(uid);
-        if (address != null) picture(header.getContext(), uid, address, header);
+        if (address != null) picture(ctx, uid, address, header);
     }
 
     /** Centre-cropped into whatever shape the header turns out to be. */
@@ -489,10 +565,9 @@ public final class Banner {
     /** Worn once per person, so a recycled header does not keep somebody else's. */
     private static void wear(View header, Bitmap picture, String uid) {
         try {
-            if (!uid.equals(header.getTag(TAG))) {
-                header.setBackground(new Painted(picture, Looks.bannerDim(uid)));
-                header.setTag(TAG, uid);
-            }
+            int dimVal = (uid != null && uid.equals(Account.id())) ? dim() : Looks.bannerDim(uid);
+            header.setBackground(new Painted(picture, dimVal));
+            header.setTag(TAG, uid);
             standing = new java.lang.ref.WeakReference<View>(header);
             standingFor = uid;
             // again on every pass: the header is rebuilt as a profile loads,

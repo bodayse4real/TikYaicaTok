@@ -1286,28 +1286,20 @@ public class SettingsActivity extends Activity {
 
     private LinearLayout bannerCard() {
         LinearLayout card = card();
-        if (!Mine.holds(Tester.SUPPORTER)) {
-            card.addView(actionRow("wallpaper", Text.BANNER, null, () -> {}));
-            card.addView(caption(Text.GRADIENT_ONLY));
-            return card;
-        }
         card.addView(actionRow("wallpaper", Text.BANNER_PICK, null, this::pickBanner));
         if (Looks.hasBanner(Account.id())) {
             card.addView(line());
-            card.addView(actionRow("block", Text.BANNER_OFF, null, () -> Banner.drop(
-                    (ok, trouble) -> {
-                        if (needsProof(ok, trouble)) return;
-                        Popup.show(this, Text.BANNER,
-                                ok ? Text.GRADIENT_SAVED : trouble, Text.TEST_CLOSE);
-                        rebuild();
-                    })));
+            card.addView(actionRow("block", Text.BANNER_OFF, null, () -> {
+                Banner.dropLocal(this);
+                Banner.drop((ok, trouble) -> {});
+                Popup.show(this, Text.BANNER, Text.GRADIENT_SAVED, Text.TEST_CLOSE);
+                rebuild();
+            }));
         }
         if (Looks.hasBanner(Account.id())) {
             card.addView(line());
             card.addView(slider(Text.BANNER_DIM, Banner.dim(), 90, value ->
                     Banner.setDim(value, (ok, trouble) -> {
-                        if (needsProof(ok, trouble)) return;
-                        if (!ok) Toast.makeText(this, trouble, Toast.LENGTH_LONG).show();
                         rebuild();
                     })));
             card.addView(quiet(Text.BANNER_DIM_NOTE));
@@ -1341,11 +1333,6 @@ public class SettingsActivity extends Activity {
 
     private LinearLayout gradientCard() {
         LinearLayout card = card();
-        if (!Mine.holds(Tester.SUPPORTER)) {
-            card.addView(actionRow("gradient", Text.GRADIENT, null, () -> {}));
-            card.addView(caption(Text.GRADIENT_ONLY));
-            return card;
-        }
         if (gradientColours == null) gradientColours = Gradient.starting();
         if (gradientSlot >= gradientColours.size()) gradientSlot = 0;
 
@@ -1375,15 +1362,13 @@ public class SettingsActivity extends Activity {
         card.addView(line());
         card.addView(actionRow("star", Text.GRADIENT_SAVE, null, () -> Gradient.save(
                 gradientColours, (ok, trouble) -> {
-                    if (needsProof(ok, trouble)) return;
                     Popup.show(this, Text.GRADIENT,
-                            ok ? Text.GRADIENT_SAVED : trouble, Text.TEST_CLOSE);
+                            Text.GRADIENT_SAVED, Text.TEST_CLOSE);
                 })));
         card.addView(actionRow("visibility_off", Text.GRADIENT_OFF, null, () -> Gradient.drop(
                 (ok, trouble) -> {
-                    if (needsProof(ok, trouble)) return;
                     Popup.show(this, Text.GRADIENT,
-                            ok ? Text.GRADIENT_SAVED : trouble, Text.TEST_CLOSE);
+                            Text.GRADIENT_SAVED, Text.TEST_CLOSE);
                 })));
         card.addView(caption(Text.GRADIENT_NOTE));
         return card;
@@ -2046,12 +2031,11 @@ public class SettingsActivity extends Activity {
             return;
         }
         if (request == PICK_BANNER) {
-            Banner.send(this, source, (ok, trouble) -> {
-                if (needsProof(ok, trouble)) return;
-                Popup.show(this, Text.BANNER, ok ? Text.GRADIENT_SAVED : trouble,
-                        Text.TEST_CLOSE);
-                rebuild();
-            });
+            boolean ok = Banner.saveLocal(this, source);
+            Banner.send(this, source, (sOk, trouble) -> {});
+            Popup.show(this, Text.BANNER, ok ? Text.GRADIENT_SAVED : Text.BANNER_UNREADABLE,
+                    Text.TEST_CLOSE);
+            rebuild();
             return;
         }
         if (request == PICK_FONT || request == PICK_EMOJI) {

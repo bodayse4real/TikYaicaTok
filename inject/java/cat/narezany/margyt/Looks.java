@@ -99,6 +99,10 @@ public final class Looks {
     }
 
     public static int[] of(String uid) {
+        if (uid != null && uid.equals(Account.id())) {
+            int[] loc = Gradient.local();
+            if (loc != null) return loc;
+        }
         return uid == null ? null : gradients.get(uid);
     }
 
@@ -121,6 +125,9 @@ public final class Looks {
     }
 
     public static boolean hasBanner(String uid) {
+        if (uid != null && uid.equals(Account.id()) && Banner.hasLocalBanner(null)) {
+            return true;
+        }
         return uid != null && banners.containsKey(uid);
     }
 
@@ -132,7 +139,9 @@ public final class Looks {
 
     /** The character that stands for this account's gradient, if it has one. */
     public static synchronized String mark(String uid) {
-        if (uid == null || !gradients.containsKey(uid)) return "";
+        if (uid == null) return "";
+        boolean isMine = uid.equals(Account.id()) && Gradient.local() != null;
+        if (!gradients.containsKey(uid) && !isMine) return "";
         for (int i = 0; i < taken; i++) {
             if (uid.equals(slots[i])) return String.valueOf((char) (first() + i));
         }
@@ -148,7 +157,12 @@ public final class Looks {
     public static int[] colours(char c) {
         int at = c - first();
         if (at < 0 || at >= taken) return null;
-        int[] found = gradients.get(slots[at]);
+        String uid = slots[at];
+        if (uid != null && uid.equals(Account.id())) {
+            int[] loc = Gradient.local();
+            if (loc != null) return loc;
+        }
+        int[] found = gradients.get(uid);
         return found != null && found.length >= 2 ? found : null;
     }
 
