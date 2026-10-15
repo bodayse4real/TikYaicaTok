@@ -3,6 +3,7 @@ package cat.narezany.margyt;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.Locale;
@@ -50,11 +52,18 @@ public final class SettingsRow implements Application.ActivityLifecycleCallbacks
 
     @Override
     public void onActivityResumed(Activity activity) {
+        long probe = Probe.start();
         Plugins.onActivityResumed(activity);
         Plugins.screen(activity);
         Screen.at(activity);
-        Updater.resumed(activity);
         Themes.watch(activity);
+        PinkButtons.watch(activity);
+        if (!Version.LITE) {
+            SocialLibrary.refresh(null);
+            Updater.resumed(activity);
+            Tutorial.maybeShow(activity);
+        }
+        Probe.stop(Probe.SHOWN, probe);
 
         String name = activity.getClass().getName();
 
@@ -73,6 +82,7 @@ public final class SettingsRow implements Application.ActivityLifecycleCallbacks
         Diary.note("settings screen is up");
         final View decor = activity.getWindow().getDecorView();
         if (decor.getTag(TAG) != null) return;
+        SettingsCell.newScreen();
         decor.setTag(TAG, Boolean.TRUE);
 
         decor.getViewTreeObserver().addOnGlobalLayoutListener(new Injector(activity));
@@ -141,6 +151,7 @@ public final class SettingsRow implements Application.ActivityLifecycleCallbacks
     @Override
     public void onActivityPaused(Activity activity) {
         Plugins.onActivityPaused(activity);
+        Tutorial.paused(activity);
         Screen.gone(activity);
     }
 
@@ -176,6 +187,7 @@ public final class SettingsRow implements Application.ActivityLifecycleCallbacks
             try {
                 if (box == null) inject(this);
                 if (box == null || container == null) return;
+                if (SettingsCell.drawn()) fold(box, true);
                 int pages = 0;
                 for (int i = 0; i < container.getChildCount(); i++) {
                     if (container.getChildAt(i).getVisibility() == View.VISIBLE) pages++;
@@ -189,6 +201,32 @@ public final class SettingsRow implements Application.ActivityLifecycleCallbacks
             } catch (Throwable error) {
                 Diary.note("row failed: " + error);
             }
+        }
+    }
+
+    /** On what holds the row above the screen, once that row has been put away. */
+    private static final int FOLDED = 0x4D617253;
+
+    /**
+     * The row is in TikTok's list, so the one above the screen goes. What
+     * held it stays, as tall as the status bar and no taller, because it is
+     * also what keeps the screen clear of that.
+     */
+    private static void fold(View box, boolean away) {
+        try {
+            if ((box.getTag(FOLDED) != null) == away) return;
+            box.setTag(FOLDED, away ? Boolean.TRUE : null);
+            if (box instanceof ViewGroup) {
+                ViewGroup group = (ViewGroup) box;
+                for (int i = 0; i < group.getChildCount(); i++) {
+                    group.getChildAt(i).setVisibility(away ? View.GONE : View.VISIBLE);
+                }
+            }
+            int gap = dp(box.getContext(), 8);
+            box.setPadding(box.getPaddingLeft(), Math.max(0, box.getPaddingTop() + (away ? -gap : gap)),
+                    box.getPaddingRight(), away ? 0 : gap);
+        } catch (Throwable error) {
+            Diary.note("row could not be put away: " + error);
         }
     }
 
@@ -225,6 +263,14 @@ public final class SettingsRow implements Application.ActivityLifecycleCallbacks
         keepClearOfTheStatusBar(column, box, container, skin);
         injector.box = box;
         injector.container = container;
+        // The row TikTok's own list will draw is a moment away. This one waits
+        // out of sight for it, and comes out if it has not been drawn.
+        if (SettingsCell.likely()) {
+            fold(box, true);
+            box.postDelayed(() -> {
+                if (!SettingsCell.drawn()) fold(box, false);
+            }, 600L);
+        }
         Diary.note("row added above " + container.getClass().getName());
     }
 
@@ -271,11 +317,16 @@ public final class SettingsRow implements Application.ActivityLifecycleCallbacks
         background.setCornerRadius(skin.radius);
         row.setBackground(background);
 
-        TextView glyph = new TextView(activity);
-        glyph.setText("\u266A");  // a note, the same one as on the icon
-        glyph.setTextColor(skin.text);
-        glyph.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
-        glyph.setGravity(Gravity.CENTER);
+        ImageView glyph = new ImageView(activity);
+        Bitmap emblem = Launcher.preview(Launcher.DEFAULT);
+        if (emblem != null) glyph.setImageBitmap(emblem);
+        glyph.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        GradientDrawable circle = new GradientDrawable();
+        circle.setShape(GradientDrawable.OVAL);
+        circle.setColor(0xFF000000);
+        glyph.setBackground(circle);
+        glyph.setClipToOutline(true);
+        glyph.setContentDescription("MargyT");
         row.addView(glyph, new LinearLayout.LayoutParams(dp(activity, 24), dp(activity, 24)));
 
         TextView title = new TextView(activity);
@@ -328,8 +379,9 @@ public final class SettingsRow implements Application.ActivityLifecycleCallbacks
                 public android.view.WindowInsets onApplyWindowInsets(
                         View view, android.view.WindowInsets insets) {
                     int top = insets.getSystemWindowInsetTop();
-                    box.setPadding(skin.margin, top + dp(column.getContext(), 8),
-                            skin.margin, dp(column.getContext(), 8));
+                    boolean folded = box.getTag(FOLDED) != null;
+                    box.setPadding(skin.margin, folded ? top : top + dp(column.getContext(), 8),
+                            skin.margin, folded ? 0 : dp(column.getContext(), 8));
                     screen.dispatchApplyWindowInsets(insets.replaceSystemWindowInsets(
                             insets.getSystemWindowInsetLeft(), 0,
                             insets.getSystemWindowInsetRight(),

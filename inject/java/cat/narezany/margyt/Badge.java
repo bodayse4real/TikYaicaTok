@@ -61,6 +61,23 @@ public final class Badge {
         }
     }
 
+    /**
+     * The name read straight off the account, which is how TikTok Lite reads
+     * it: Lite was built with the getter folded away, so there is no call to
+     * stand in for and the read itself comes here. The full app still calls
+     * the getter and is given back what was there.
+     */
+    public static String nickname(User user) {
+        if (user == null) return null;
+        String name = user.nickname;
+        if (!Version.LITE) return name;
+        try {
+            return marked(name, user.getUid(), false);
+        } catch (Throwable ignored) {
+            return name;
+        }
+    }
+
     /** The same name, off the model a loaded profile uses instead. */
     public static String getNickname(UserProfileInfo user) {
         if (user == null) return null;
@@ -84,10 +101,7 @@ public final class Badge {
         if (name == null || name.length() == 0) return name;
         // with badges off and no plugin listening, a name is somebody else's
         // text and is handed back exactly as it came
-        if (!Badges.isEnabled() && !Plugins.anyRunning()
-                && Patch.running().length() == 0) {
-            return name;
-        }
+        if (!Badges.isEnabled() && !Plugins.anyRunning()) return name;
         try {
             // Cleared first, always. Whatever marks are on the way in are
             // either ones the mod put there a moment ago -- in which case
@@ -95,13 +109,47 @@ public final class Badge {
             // somebody typed into their own name to wear a badge they were
             // never given. Neither survives; only what the account is owed is
             // put back.
-            String mended = Patch.name(uid, name);
-            String own = Plugins.name(uid, strip(mended == null ? name : mended));
+            String own = Plugins.name(uid, strip(name));
             remember(uid, own, fromProfile);
             String marks = Badges.marksFor(uid) + Looks.mark(uid);
             if (marks.length() > 0) return own + '\u2009' + marks;
             return own;
         } catch (Throwable ignored) {
+            return name;
+        }
+    }
+
+    // ------------------------------------------------- a name in a conversation
+
+    /**
+     * The names in the inbox and at the head of a conversation.
+     *
+     * They are not read off `User` at all: a conversation has models of its
+     * own, and a badge that showed under every video was missing from the one
+     * place people talk to each other. The models differ and what they answer
+     * to does not -- a name and an account id -- so they arrive as plain
+     * objects and are asked by name.
+     */
+    public static String getDisplayName(Object contact) {
+        return chatName(contact, "getDisplayName");
+    }
+
+    public static String getNickName(Object contact) {
+        return chatName(contact, "getNickName");
+    }
+
+    private static String chatName(Object contact, String method) {
+        if (contact == null) return null;
+        String name = null;
+        try {
+            Object said = contact.getClass().getMethod(method).invoke(contact);
+            name = said instanceof String ? (String) said : null;
+            Object uid = contact.getClass().getMethod("getUid").invoke(contact);
+            if (name == null || !(uid instanceof String)) return name;
+            String id = (String) uid;
+            return id.matches("[0-9]{1,24}") ? marked(name, id, false) : name;
+        } catch (Throwable ignored) {
+            // an account whose name could not be dressed still has a name
             return name;
         }
     }
@@ -140,10 +188,9 @@ public final class Badge {
     private static void remember(String uid, String name, boolean fromProfile) {
         if (!fromProfile || uid == null || name == null || name.length() == 0) return;
         try {
-            // a banner or a gradient is reason enough to remember whose
-            // profile this is, badges or not
-            if (Badges.marksFor(uid).length() == 0 && !Looks.hasBanner(uid)
-                    && Looks.of(uid) == null) {
+            // a gradient is reason enough to remember whose profile this is,
+            // badges or not
+            if (Badges.marksFor(uid).length() == 0 && Looks.of(uid) == null) {
                 return;
             }
             lastName = name;
@@ -197,7 +244,6 @@ public final class Badge {
             if (showing != null && name.contentEquals(showing)) {
                 String out = marked(showing.toString(), uid, false);
                 if (!out.equals(showing.toString())) setText(text, out);
-                Banner.show(text, uid);
             }
         }
         if (view instanceof android.view.ViewGroup) {
@@ -260,12 +306,14 @@ public final class Badge {
      * scan of a short string, and nothing else.
      */
     public static void setText(TextView view, CharSequence text) {
+        long probe = Probe.start();
         Fonts.apply(view);
         if (view instanceof android.widget.EditText) {
             view.setText(typed(view, text));
             return;
         }
         CharSequence out = marked(view, text);
+        Probe.stop(Probe.TEXT, probe);
         // asking for it to be kept spannable, because a TextView told to store
         // plain text copies the spans into an immutable SpannedString and the
         // tap has nothing left to find
@@ -277,12 +325,14 @@ public final class Badge {
     }
 
     public static void setText(TextView view, CharSequence text, TextView.BufferType type) {
+        long probe = Probe.start();
         Fonts.apply(view);
         if (view instanceof android.widget.EditText) {
             view.setText(typed(view, text), type);
             return;
         }
         CharSequence out = marked(view, text);
+        Probe.stop(Probe.TEXT, probe);
         view.setText(out, out != text ? TextView.BufferType.SPANNABLE : type);
     }
 
@@ -291,9 +341,13 @@ public final class Badge {
 
         Looks.clear(view);
 
+        // Every label in the app comes through here, and nearly none of them
+        // carries a mark. The marks all live in the private-use area, so one
+        // comparison settles most characters before anything is asked.
         boolean any = false;
         for (int i = text.length() - 1; i >= 0 && !any; i--) {
             char c = text.charAt(i);
+            if (c < '\uE000' || c > '\uF8FF') continue;
             any = Badges.isMark(c) || Looks.isMark(c);
         }
         if (!any) return text;
@@ -455,6 +509,7 @@ public final class Badge {
 
         @Override
         public void onClick(View widget) {
+            if (Version.TEST || Version.LITE) android.util.Log.i("MargyT", "badge: tapped, in " + widget.getContext());
             String head = badge.title != null && badge.title.length() > 0
                     ? badge.title : "MargyT";
             Popup.show(widget.getContext(), head, badge.text, badge.button,
@@ -498,6 +553,7 @@ public final class Badge {
             int action = event.getAction();
             if (action == MotionEvent.ACTION_DOWN) {
                 pressed = span(v, event) != null;
+                if (Version.TEST || Version.LITE) android.util.Log.i("MargyT", "badge: a touch on a name, on the badge: " + pressed);
                 return pressed;
             }
             if (!pressed) return false;

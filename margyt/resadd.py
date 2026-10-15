@@ -33,10 +33,12 @@ UTF8_FLAG = 1 << 8
 
 
 def add_files(data: bytes, package_id: int, type_name: str,
-              names_and_paths: List[tuple]) -> bytes:
+              names_and_paths: List[tuple], package_name: str = "margyt") -> bytes:
     """Add one package holding a file resource per (name, path) given.
 
     The ids handed out are `package_id<<24 | 1<<16 | n`, in the order given.
+    A second package added to the same table is given a name of its own:
+    the system keeps a list of packages by name as well as by number.
     """
     table_kind, table_header, table_size = struct.unpack_from("<HHI", data, 0)
     if table_kind != RES_TABLE:
@@ -48,13 +50,58 @@ def add_files(data: bytes, package_id: int, type_name: str,
 
     package = _package(package_id, type_name,
                        [name for name, _path in names_and_paths],
-                       list(range(first_string, first_string + len(paths))))
+                       list(range(first_string, first_string + len(paths))),
+                       package_name)
 
     out = bytearray(grown)
     out.extend(package)
     struct.pack_into("<I", out, 8, package_count + 1)
     struct.pack_into("<I", out, 4, len(out))
     return bytes(out)
+
+
+def add_adaptive_icons(data: bytes, package_id: int,
+                       names_and_paths: List[tuple]) -> bytes:
+    """Add mipmaps with a PNG default and an adaptive XML value on API 26+.
+
+    Each tuple is (resource name, legacy PNG path, adaptive XML or PNG path).
+    Layer resources can use the same PNG in both configurations.
+    """
+    kind, header, _size = struct.unpack_from("<HHI", data, 0)
+    if kind != RES_TABLE or not names_and_paths:
+        raise ValueError("not a resource table or no icons")
+    package_count = struct.unpack_from("<I", data, 8)[0]
+    paths = [row[1] for row in names_and_paths] + [row[2] for row in names_and_paths]
+    grown, first = _append_strings(data, header, paths)
+    count = len(names_and_paths)
+    package = _package_adaptive(
+        package_id, [row[0] for row in names_and_paths],
+        list(range(first, first + count)),
+        list(range(first + count, first + 2 * count)),
+    )
+    out = bytearray(grown)
+    out.extend(package)
+    struct.pack_into("<I", out, 8, package_count + 1)
+    struct.pack_into("<I", out, 4, len(out))
+    return bytes(out)
+
+
+def _package_adaptive(package_id: int, keys: List[str], legacy: List[int],
+                      adaptive: List[int]) -> bytes:
+    type_pool = _pool(["mipmap"])
+    key_pool = _pool(keys)
+    body = type_pool + key_pool + _spec(len(keys))
+    body += _type(len(keys), legacy) + _type(len(keys), adaptive, sdk=26)
+    header_size = 288
+    head = bytearray(header_size)
+    struct.pack_into("<HHI", head, 0, RES_TABLE_PACKAGE, header_size,
+                     header_size + len(body))
+    struct.pack_into("<I", head, 8, package_id)
+    name = "margyt".encode("utf-16-le")
+    head[12:12 + len(name)] = name
+    struct.pack_into("<4I", head, 268,
+                     header_size, 1, header_size + len(type_pool), len(keys))
+    return bytes(head) + body
 
 
 def _append_strings(data: bytes, pool_at: int, strings: List[str]):
@@ -124,7 +171,7 @@ def _encode(text: str, utf8: bool) -> bytes:
 
 
 def _package(package_id: int, type_name: str, keys: List[str],
-             string_indexes: List[int]) -> bytes:
+             string_indexes: List[int], package_name: str = "margyt") -> bytes:
     """A whole package chunk: its two pools, a type spec, and one type."""
     type_pool = _pool([type_name])
     key_pool = _pool(keys)
@@ -139,7 +186,7 @@ def _package(package_id: int, type_name: str, keys: List[str],
     struct.pack_into("<HHI", head, 0, RES_TABLE_PACKAGE, header_size,
                      header_size + len(body))
     struct.pack_into("<I", head, 8, package_id)
-    name = "margyt".encode("utf-16-le")
+    name = package_name.encode("utf-16-le")
     head[12:12 + len(name)] = name
     # typeStrings, lastPublicType, keyStrings, lastPublicKey
     struct.pack_into("<4I", head, 268,
@@ -178,10 +225,11 @@ def _spec(count: int) -> bytes:
     return bytes(out)
 
 
-def _type(count: int, string_indexes: List[int]) -> bytes:
+def _type(count: int, string_indexes: List[int], sdk: int = 0) -> bytes:
     """One configuration -- the default one -- holding every entry."""
     config = bytearray(64)
     struct.pack_into("<I", config, 0, 64)
+    struct.pack_into("<H", config, 24, sdk)
 
     entries = bytearray()
     offsets = bytearray()

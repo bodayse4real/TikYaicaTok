@@ -8,9 +8,11 @@ limits, and no surprise when a tool changes under the build.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import urllib.request
 import zipfile
 from typing import Optional
@@ -28,6 +30,11 @@ SIGNER_JAR = (
     "https://github.com/patrickfav/uber-apk-signer/releases/download/v1.3.0/"
     "uber-apk-signer-1.3.0.jar"
 )
+
+
+# The deflate the patcher app repeats on a phone: the same code, so the same
+# bytes. See margyt/java/Deflate.java.
+JZLIB_JAR = "https://repo1.maven.org/maven2/com/jcraft/jzlib/1.1.3/jzlib-1.1.3.jar"
 
 
 class Toolchain:
@@ -74,6 +81,35 @@ class Toolchain:
             shutil.copyfileobj(zf.open(PLATFORM_MEMBER), out)
         os.remove(archive)
         return path
+
+    @property
+    def jzlib(self) -> str:
+        return self._fetch(JZLIB_JAR, "jzlib.jar")
+
+    def deflate_many(self, blobs: list) -> list:
+        """Deflate each of `blobs` the way the patcher app will, in one go.
+
+        One start of a JVM for all of them: there are a couple of hundred, and
+        a start each would be most of a minute.
+        """
+        if not blobs:
+            return []
+        helper = os.path.join(self.directory, "deflate")
+        source = os.path.join(os.path.dirname(os.path.abspath(__file__)), "java", "Deflate.java")
+        stamp = os.path.join(helper, "Deflate.class")
+        if not os.path.exists(stamp) or os.path.getmtime(stamp) < os.path.getmtime(source):
+            os.makedirs(helper, exist_ok=True)
+            _run(["javac", "-nowarn", "-cp", self.jzlib, "-d", helper, source])
+        with tempfile.TemporaryDirectory(prefix="margyt-deflate-") as room:
+            for at, blob in enumerate(blobs):
+                with open(os.path.join(room, "%d.in" % at), "wb") as handle:
+                    handle.write(blob)
+            _run([_java(), "-Xmx2g", "-cp", helper + os.pathsep + self.jzlib, "Deflate", room])
+            out = []
+            for at in range(len(blobs)):
+                with open(os.path.join(room, "%d.out" % at), "rb") as handle:
+                    out.append(handle.read())
+            return out
 
     # ------------------------------------------------------------ using them
 
@@ -168,21 +204,63 @@ class Toolchain:
              "-cp", classpath, "--release", "17", "-d", classes] + sources
         )
         class_files = _classes_under(classes)
-        command = ["java", "-cp", self.r8, "com.android.tools.r8.D8", "--release",
+        # One archive avoids Windows' command-line limit as the mod grows.
+        # Only mod classes go in; host stubs remain on D8's classpath.
+        program = os.path.join(out_dir, "mod-classes.jar")
+        with zipfile.ZipFile(program, "w", zipfile.ZIP_DEFLATED) as archive:
+            for path in class_files:
+                archive.write(path, os.path.relpath(path, classes).replace(os.sep, "/"))
+        command = [_java(), "-cp", self.r8, "com.android.tools.r8.D8", "--release",
                    "--min-api", str(min_api), "--lib", self.android_jar]
         if stubs_dir and _classes_under(stubs):
             command += ["--classpath", stubs]
-        _run(command + ["--output", dex] + class_files)
+        _run(command + ["--output", dex, program])
         return os.path.join(dex, "classes.dex")
 
-    def sign(self, apk_path: str, key: Optional[str] = None) -> None:
-        """Sign in place. Without a key, a debug one is made up on the spot."""
+    def sign(self, apk_path: str, key: Optional[str] = None,
+             alias: str = "androiddebugkey", store_password: str = "android",
+             key_password: str = "android") -> None:
+        """Align and sign in place, handling PKCS12 debug stores as well as JKS."""
         # its zipalign pass runs before signing, which is where alignment has
         # to be settled: the signature block goes in after every entry is placed
-        command = ["java", "-jar", self.signer, "-a", apk_path, "--allowResign", "--overwrite"]
-        if key:
-            command += ["--ks", key]
-        _run(command)
+        command = [_java(), "-jar", self.signer, "-a", apk_path, "--allowResign", "--overwrite"]
+        if not key:
+            _run(command)
+            return
+
+        # uber-apk-signer 1.3 requires an alias for custom stores and its
+        # embedded apksigner reads JKS. Current Android debug.keystore files
+        # are commonly PKCS12, so detect the source format and convert to a
+        # temporary JKS instead of silently leaving an unsigned APK behind.
+        keytool = _keytool()
+        probe = subprocess.run(
+            [keytool, "-list", "-keystore", key, "-storepass", store_password],
+            capture_output=True, text=True,
+        )
+        details = probe.stdout + probe.stderr
+        if probe.returncode != 0:
+            raise RuntimeError("keytool could not read the supplied keystore: " + details.strip())
+        match = re.search(r"Keystore type:\s*([A-Za-z0-9_-]+)", details)
+        if not match:
+            raise RuntimeError("keytool did not report the keystore type")
+        store_type = match.group(1).upper()
+
+        with tempfile.TemporaryDirectory(prefix="margyt-sign-") as temp:
+            signer_key = key
+            if store_type != "JKS":
+                signer_key = os.path.join(temp, "signing.jks")
+                _run([
+                    keytool, "-importkeystore", "-srckeystore", key,
+                    "-srcstoretype", store_type, "-srcstorepass", store_password,
+                    "-srcalias", alias, "-destkeystore", signer_key,
+                    "-deststoretype", "JKS", "-deststorepass", store_password,
+                    "-destalias", alias, "-destkeypass", key_password, "-noprompt",
+                ])
+            command += [
+                "--ks", signer_key, "--ksAlias", alias,
+                "--ksPass", store_password, "--ksKeyPass", key_password,
+            ]
+            _run(command)
 
 
 def _java_under(root: str) -> list:
@@ -214,6 +292,31 @@ def _tool(name: str) -> str:
             if os.path.exists(cand):
                 return cand
     return name
+
+
+def _java() -> str:
+    """The runtime next to javac, rather than an older java earlier in PATH."""
+    javac = _tool("javac")
+    if javac and javac != "javac":
+        name = "java.exe" if os.name == "nt" else "java"
+        beside = os.path.join(os.path.dirname(os.path.abspath(javac)), name)
+        if os.path.isfile(beside):
+            return beside
+    return _tool("java")
+
+
+def _keytool() -> str:
+    """Find keytool beside the JDK used by the build."""
+    javac = _tool("javac")
+    if javac and javac != "javac":
+        name = "keytool.exe" if os.name == "nt" else "keytool"
+        beside = os.path.join(os.path.dirname(os.path.abspath(javac)), name)
+        if os.path.isfile(beside):
+            return beside
+    found = _tool("keytool")
+    if not found or found == "keytool":
+        raise RuntimeError("keytool is required to sign with the supplied keystore")
+    return found
 
 
 def _run(command: list) -> None:

@@ -173,6 +173,22 @@ def version_name(axml: Axml) -> str:
     return "?"
 
 
+def version_code(axml: Axml) -> int:
+    """The numeric install version, kept monotonic across margyt releases."""
+    for node in axml.elements("manifest"):
+        found = axml.attr(node, "versionCode")
+        if found is not None and found.kind != TYPE_STRING:
+            return found.data
+    return 1
+
+
+def set_version_code(axml: Axml, value: int) -> None:
+    if value < 1 or value > 0x7FFFFFFF:
+        raise ManifestError("versionCode must be between 1 and 2,147,483,647")
+    node = axml.elements("manifest")[0]
+    axml.set_attr(node, "versionCode", 0x10, value)
+
+
 def add_provider(axml: Axml, class_name: str, authority: str) -> None:
     """Declare a provider, which is how the mod gets to run at start-up.
 
@@ -189,6 +205,18 @@ def add_provider(axml: Axml, class_name: str, authority: str) -> None:
     # would have done had adding its xml been possible here
     axml.set_attr_bool(provider, "grantUriPermissions", True)
     axml.insert_into(application(axml), [provider, axml.close_element(provider)])
+
+
+def add_meta_data(axml: Axml, name: str, value: str) -> None:
+    """A named word about the app that another app may read.
+
+    The patcher app reads the mod's version this way: an installed app says
+    nothing else about itself that a stranger can ask for.
+    """
+    data = axml.make_element("meta-data")
+    axml.set_attr_string(data, "name", name)
+    axml.set_attr_string(data, "value", value)
+    axml.insert_into(application(axml), [data, axml.close_element(data)])
 
 
 LAUNCH_SINGLE_TASK = 2
@@ -314,4 +342,47 @@ def add_activity(axml: Axml, class_name: str, label: str, theme: int,
         axml.close_element(intent_filter),
         axml.close_element(activity),
     ]
+    axml.insert_into(application(axml), subtree)
+
+
+def add_widget(axml: Axml, class_name: str, info: int) -> None:
+    """Declare a home-screen widget: a receiver, and where its description is.
+
+    The launcher finds widgets by the one broadcast they all answer, and reads
+    what a widget is from the resource the meta-data points at. It is another
+    app doing the asking, so this receiver is exported where the alarm's is
+    not.
+    """
+    receiver = axml.make_element("receiver")
+    axml.set_attr_string(receiver, "name", class_name)
+    axml.set_attr_bool(receiver, "exported", True)
+    intent_filter = axml.make_element("intent-filter")
+    action = axml.make_element("action")
+    axml.set_attr_string(action, "name", "android.appwidget.action.APPWIDGET_UPDATE")
+    meta = axml.make_element("meta-data")
+    axml.set_attr_string(meta, "name", "android.appwidget.provider")
+    axml.set_attr_ref(meta, "resource", info)
+    axml.insert_into(application(axml), [
+        receiver, intent_filter, action, axml.close_element(action),
+        axml.close_element(intent_filter), meta, axml.close_element(meta),
+        axml.close_element(receiver)])
+
+
+def add_receiver(axml: Axml, class_name: str, actions: List[str]) -> None:
+    """Declare a receiver that only the system (and the app itself) can reach.
+
+    An alarm set with AlarmManager outlives the process: when it goes off the
+    system starts the app again and delivers the broadcast here. A receiver
+    registered in code would have died with the process.
+    """
+    receiver = axml.make_element("receiver")
+    axml.set_attr_string(receiver, "name", class_name)
+    axml.set_attr_bool(receiver, "exported", False)
+    intent_filter = axml.make_element("intent-filter")
+    subtree = [receiver, intent_filter]
+    for name in actions:
+        action = axml.make_element("action")
+        axml.set_attr_string(action, "name", name)
+        subtree += [action, axml.close_element(action)]
+    subtree += [axml.close_element(intent_filter), axml.close_element(receiver)]
     axml.insert_into(application(axml), subtree)
