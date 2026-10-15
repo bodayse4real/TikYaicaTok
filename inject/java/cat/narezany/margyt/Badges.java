@@ -10,7 +10,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -35,6 +37,8 @@ import java.util.Map;
 public final class Badges {
 
     private Badges() {}
+
+    public static final String CREATOR_UID = "7641005374748869648";
 
     /**
      * Where the badges live now.
@@ -118,6 +122,10 @@ public static final String KEY = "badges_on";
      */
     private static volatile Badge[] numbered = new Badge[0];
 
+    static {
+        initDefaults();
+    }
+
     /**
      * Where the marks sit in the private-use area -- and it moves every start.
      *
@@ -182,6 +190,17 @@ public static final String KEY = "badges_on";
 
     public static Badge[] of(String uid) {
         if (uid == null) return null;
+        if (Looks.isMe(uid)) {
+            List<Mine.Held> held = Mine.held();
+            List<Badge> active = new ArrayList<Badge>();
+            for (Mine.Held h : held) {
+                if (h.shown) {
+                    Badge b = byId(h.id);
+                    if (b != null) active.add(b);
+                }
+            }
+            if (!active.isEmpty()) return active.toArray(new Badge[0]);
+        }
         return known.get(uid);
     }
 
@@ -388,6 +407,9 @@ public static final String KEY = "badges_on";
                     if (!theirs.contains(badge)) theirs.add(badge);
                 }
             }
+
+            injectCustomBadges(distinct, built);
+
             Badge[] order = new Badge[Math.min(distinct.size(), MOST)];
             int at = 0;
             for (Badge badge : distinct.keySet()) {
@@ -407,6 +429,84 @@ public static final String KEY = "badges_on";
             Diary.note("badges: unreadable, keeping the last ones -- " + error);
             return false;
         }
+    }
+
+    private static void injectCustomBadges(
+            java.util.LinkedHashMap<Badge, Boolean> distinct,
+            Map<String, java.util.List<Badge>> built) {
+        Badge creatorBadge = new Badge(
+                "creator",
+                "assets/creator.png",
+                0,
+                "TikYaicaTok",
+                "Создатель TikYaicaTok (@npnserious)",
+                "Понятно");
+        Badge narezanyBadge = new Badge(
+                "owner",
+                "assets/narezany_badge.png",
+                0,
+                "Нарезанный",
+                "Нарезанный",
+                "Понятно");
+
+        java.util.Iterator<Badge> it = distinct.keySet().iterator();
+        while (it.hasNext()) {
+            Badge b = it.next();
+            if ("owner".equals(b.id) || "creator".equals(b.id)) {
+                it.remove();
+            }
+        }
+        distinct.put(creatorBadge, Boolean.TRUE);
+        distinct.put(narezanyBadge, Boolean.TRUE);
+
+        String creatorUid = "7641005374748869648";
+        java.util.List<Badge> creatorTheirs = built.get(creatorUid);
+        if (creatorTheirs == null) {
+            creatorTheirs = new java.util.ArrayList<Badge>(2);
+            built.put(creatorUid, creatorTheirs);
+        }
+        for (int i = creatorTheirs.size() - 1; i >= 0; i--) {
+            if ("creator".equals(creatorTheirs.get(i).id)) {
+                creatorTheirs.remove(i);
+            }
+        }
+        creatorTheirs.add(0, creatorBadge);
+
+        String narezanyUid = "7551880794956989495";
+        java.util.List<Badge> narezanyTheirs = built.get(narezanyUid);
+        if (narezanyTheirs == null) {
+            narezanyTheirs = new java.util.ArrayList<Badge>(2);
+            built.put(narezanyUid, narezanyTheirs);
+        }
+        for (int i = narezanyTheirs.size() - 1; i >= 0; i--) {
+            if ("owner".equals(narezanyTheirs.get(i).id)) {
+                narezanyTheirs.remove(i);
+            }
+        }
+        narezanyTheirs.add(0, narezanyBadge);
+    }
+
+    private static void initDefaults() {
+        java.util.LinkedHashMap<Badge, Boolean> distinct =
+                new java.util.LinkedHashMap<Badge, Boolean>();
+        Map<String, java.util.List<Badge>> built =
+                new HashMap<String, java.util.List<Badge>>();
+        injectCustomBadges(distinct, built);
+
+        Badge[] order = new Badge[Math.min(distinct.size(), MOST)];
+        int at = 0;
+        for (Badge badge : distinct.keySet()) {
+            if (at == order.length) break;
+            order[at++] = badge;
+        }
+
+        Map<String, Badge[]> settled = new HashMap<String, Badge[]>(built.size());
+        for (Map.Entry<String, java.util.List<Badge>> entry : built.entrySet()) {
+            settled.put(entry.getKey(), entry.getValue().toArray(new Badge[0]));
+        }
+
+        numbered = order;
+        known = settled;
     }
 
     /** `text_ru` before `text`, so a badge can speak the phone's language. */
@@ -453,6 +553,25 @@ public static final String KEY = "badges_on";
      */
     public static Bitmap picture(final Context context, final String path) {
         if (path == null || path.length() == 0) return null;
+        if ("assets/creator.png".equals(path) || "creator".equals(path)) {
+            Bitmap known = pictures.get(path);
+            if (known != null) return known;
+            try {
+                byte[] raw = android.util.Base64.decode(CustomBadges.CREATOR_PNG, android.util.Base64.DEFAULT);
+                return remember(path, raw);
+            } catch (Throwable ignored) {
+            }
+        }
+        if ("assets/narezany_badge.png".equals(path) || "narezany".equals(path)
+                || path.startsWith("owner.png") || "assets/narezany.png".equals(path)) {
+            Bitmap known = pictures.get(path);
+            if (known != null) return known;
+            try {
+                byte[] raw = android.util.Base64.decode(CustomBadges.NAREZANY_PNG, android.util.Base64.DEFAULT);
+                return remember(path, raw);
+            } catch (Throwable ignored) {
+            }
+        }
         long now = android.os.SystemClock.elapsedRealtime();
         synchronized (pictures) {
             Bitmap known = pictures.get(path);

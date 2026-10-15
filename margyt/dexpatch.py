@@ -1549,8 +1549,39 @@ SETTINGS_FIRST_ROW = ("    invoke-static/range {v9 .. v14}, LX/1HtZ;->LIZIZ(ZZLc
 
 
 def _class_file(root: str, descriptor: str) -> Optional[str]:
-    path = os.path.join(root, *descriptor[1:-1].split("/")) + ".smali"
-    return path if os.path.exists(path) else None
+    parts = descriptor[1:-1].split("/")
+    dir_path = os.path.join(root, *parts[:-1])
+    if not os.path.isdir(dir_path):
+        return None
+    class_name = parts[-1]
+
+    def matches(filename: str) -> bool:
+        full = os.path.join(dir_path, filename)
+        if not os.path.isfile(full):
+            return False
+        try:
+            with open(full, "r", encoding="utf-8", errors="ignore") as f:
+                first = f.readline()
+                return first.startswith(".class ") and first.strip().endswith(descriptor)
+        except Exception:
+            return False
+
+    exact = class_name + ".smali"
+    if matches(exact):
+        return os.path.join(dir_path, exact)
+
+    try:
+        lower_name = class_name.lower()
+        for f in os.listdir(dir_path):
+            if f.endswith(".smali"):
+                base = f[:-6]
+                if base.split(".")[0].lower() == lower_name:
+                    if matches(f):
+                        return os.path.join(dir_path, f)
+    except OSError:
+        pass
+
+    return None
 
 
 def rewrite_settings_row(root: str, dex: Optional[bytes] = None) -> Dict[str, int]:
@@ -2040,7 +2071,8 @@ class Smali:
         self.heap = os.environ.get("MARGYT_HEAP") or heap
 
     def _run(self, main: str, args: List[str]) -> None:
-        command = ["java", "-Xmx" + self.heap, "-cp", self.jar, main] + args
+        from .toolchain import _java
+        command = [_java(), "-Xmx" + self.heap, "-cp", self.jar, main] + args
         result = subprocess.run(command, capture_output=True, text=True)
         if result.returncode != 0:
             raise RuntimeError(

@@ -71,4 +71,7 @@ def with_mod(sources):
     if 'Names.' in everything:
         sources.setdefault('cat/narezany/margyt/Names.java', doubles['cat/narezany/margyt/Names.java'])
         sources.setdefault('android/util/SparseArray.java', doubles['android/util/SparseArray.java'])
+    if 'Mine.' in everything:
+        sources.setdefault('cat/narezany/margyt/Mine.java',
+                           'package cat.narezany.margyt;public final class Mine{public static boolean isOwner(){return false;}}')
     return sources

@@ -119,11 +119,18 @@ class Toolchain:
         Framework resource ids never change, but writing one into the source
         makes it a number nobody can check. javap can just read it.
         """
+        javap = _tool("javap")
         result = subprocess.run(
-            ["javap", "-cp", self.android_jar, "-constants", "android.R$style"],
+            [javap, "-cp", self.android_jar, "-constants", "android.R.style"],
             capture_output=True,
             text=True,
         )
+        if not result.stdout or " = " not in result.stdout:
+            result = subprocess.run(
+                [javap, "-cp", self.android_jar, "-constants", "android.R$style"],
+                capture_output=True,
+                text=True,
+            )
         for line in result.stdout.splitlines():
             if (" " + field + " = ") in line:
                 return int(line.rsplit("=", 1)[1].strip().rstrip(";"))
@@ -137,11 +144,18 @@ class Toolchain:
         table nobody can check, and one wrong digit writes an attribute that
         means something else entirely.
         """
+        javap = _tool("javap")
         result = subprocess.run(
-            ["javap", "-cp", self.android_jar, "-constants", "android.R$attr"],
+            [javap, "-cp", self.android_jar, "-constants", "android.R.attr"],
             capture_output=True,
             text=True,
         )
+        if not result.stdout or " = " not in result.stdout:
+            result = subprocess.run(
+                [javap, "-cp", self.android_jar, "-constants", "android.R$attr"],
+                capture_output=True,
+                text=True,
+            )
         known = {}
         for line in result.stdout.splitlines():
             if " = " not in line or not line.strip().endswith(";"):
@@ -263,27 +277,44 @@ def _classes_under(root: str) -> list:
     return sorted(out)
 
 
+def _tool(name: str) -> str:
+    path = shutil.which(name)
+    if path:
+        return path
+    java_home = os.environ.get("JAVA_HOME")
+    if java_home:
+        cand = os.path.join(java_home, "bin", name + (".exe" if os.name == "nt" else ""))
+        if os.path.exists(cand):
+            return cand
+    if os.name == "nt":
+        import glob
+        for cand in glob.glob(r"C:\Program Files\Java\jdk*\bin\\" + name + ".exe"):
+            if os.path.exists(cand):
+                return cand
+    return name
+
+
 def _java() -> str:
     """The runtime next to javac, rather than an older java earlier in PATH."""
-    javac = shutil.which("javac")
-    if javac:
+    javac = _tool("javac")
+    if javac and javac != "javac":
         name = "java.exe" if os.name == "nt" else "java"
         beside = os.path.join(os.path.dirname(os.path.abspath(javac)), name)
         if os.path.isfile(beside):
             return beside
-    return shutil.which("java") or "java"
+    return _tool("java")
 
 
 def _keytool() -> str:
     """Find keytool beside the JDK used by the build."""
-    javac = shutil.which("javac")
-    if javac:
+    javac = _tool("javac")
+    if javac and javac != "javac":
         name = "keytool.exe" if os.name == "nt" else "keytool"
         beside = os.path.join(os.path.dirname(os.path.abspath(javac)), name)
         if os.path.isfile(beside):
             return beside
-    found = shutil.which("keytool")
-    if not found:
+    found = _tool("keytool")
+    if not found or found == "keytool":
         raise RuntimeError("keytool is required to sign with the supplied keystore")
     return found
 
@@ -292,6 +323,7 @@ def _run(command: list) -> None:
     environment = dict(os.environ)
     # the wrapper's own JVM options print a banner into every tool's output
     environment.pop("JAVA_TOOL_OPTIONS", None)
+    command = [_tool(command[0])] + command[1:]
     result = subprocess.run(command, capture_output=True, text=True, env=environment)
     if result.returncode != 0:
         sys.stderr.write(result.stdout + result.stderr)

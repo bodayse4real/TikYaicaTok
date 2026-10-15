@@ -1,15 +1,13 @@
 <div align="center">
 
-<img src="assets/banner.png" alt="MargyT" width="640">
+# TikYaicaTok
 
 **A TikTok mod for Android.**
-The second in the line after [Margy](https://github.com/narezany/Margelet).
+Based on [MargyT](https://git.narez.xyz/narezany/MargyT) by [narezany](https://git.narez.xyz/narezany).
 Built from the official apk with the patches in this repository.
 
-[![channel](https://img.shields.io/badge/channel-margytiktok-8DD1B0?style=flat-square)](https://t.me/margytiktok)
-[![forum](https://img.shields.io/badge/forum-margeletforum-8DD1B0?style=flat-square)](https://t.me/margeletforum)
 [![plugins](https://img.shields.io/badge/plugins-docs-8DD1B0?style=flat-square)](docs/plugins.md)
-[![licence](https://img.shields.io/badge/licence-MIT-8DD1B0?style=flat-square)](#licence)
+[![licence](https://img.shields.io/badge/licence-GPL--3.0-8DD1B0?style=flat-square)](#licence)
 
 </div>
 
@@ -19,7 +17,7 @@ Keeps TikTok's own package, `com.zhiliaoapp.musically`, so it goes in **instead
 of** the official app rather than beside it: uninstall TikTok first, then
 install this. arm64 only. No root.
 
-Everything the mod adds is on one screen: **Settings and privacy → MargyT**,
+Everything the mod adds is on one screen: **Settings and privacy → TikYaicaTok**,
 the first row. There is no second icon on the home screen — the mod goes in
 through TikTok's own settings and nowhere else.
 

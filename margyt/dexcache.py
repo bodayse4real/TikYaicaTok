@@ -177,11 +177,16 @@ def _copy(tree: str, into: str) -> None:
     """
     shutil.rmtree(into, ignore_errors=True)
     os.makedirs(os.path.dirname(into), exist_ok=True)
-    done = subprocess.run(["cp", "-a", "--reflink=auto", tree, into],
-                          capture_output=True, text=True)
-    if done.returncode != 0:
-        shutil.rmtree(into, ignore_errors=True)
-        shutil.copytree(tree, into)
+    if os.name != "nt":
+        try:
+            done = subprocess.run(["cp", "-a", "--reflink=auto", tree, into],
+                                  capture_output=True, text=True)
+            if done.returncode == 0:
+                return
+        except OSError:
+            pass
+    shutil.rmtree(into, ignore_errors=True)
+    shutil.copytree(tree, into)
 
 
 def _rewrite(root: str, literals: Dict[str, str],

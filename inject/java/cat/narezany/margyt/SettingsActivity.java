@@ -233,7 +233,7 @@ public class SettingsActivity extends Activity {
             restoreScroll(previousScroll);
             return;
         }
-        column.addView(title(settingsGroup == 0 ? (Version.LITE ? "MargyT Lite" : "MargyT") : groupName(settingsGroup)));
+        column.addView(title(settingsGroup == 0 ? (Version.LITE ? "TikYaicaTok Lite" : "TikYaicaTok") : groupName(settingsGroup)));
         if(settingsGroup==0 || searchQuery.length()>0)column.addView(searchBox());
         if (settingsGroup != 0) column.addView(wrap(actionRow("info",Local.of("Подсказки"),null,this::showSectionHelp)));
         if (searchQuery.length() > 0) {
@@ -247,6 +247,7 @@ public class SettingsActivity extends Activity {
             column.addView(donateBanner());
             column.addView(groupNavigation());
             column.addView(wrap(actionRow("info",Local.of("Обучение"),null,() -> Tutorial.show(this))));
+            column.addView(devCard());
             column.addView(versions());
             showRestartBar();
             restoreScroll(0);
@@ -1068,11 +1069,6 @@ public class SettingsActivity extends Activity {
 
     private LinearLayout gradientCard() {
         LinearLayout card = card();
-        if (!Mine.holds(Tester.SUPPORTER)) {
-            card.addView(actionRow("gradient", Text.GRADIENT, null, () -> {}));
-            card.addView(caption(Text.GRADIENT_ONLY));
-            return card;
-        }
         if (gradientColours == null) gradientColours = Gradient.starting();
         if (gradientSlot >= gradientColours.size()) gradientSlot = 0;
 
@@ -1102,15 +1098,15 @@ public class SettingsActivity extends Activity {
         card.addView(line());
         card.addView(actionRow("star", Text.GRADIENT_SAVE, null, () -> Gradient.save(
                 gradientColours, (ok, trouble) -> {
-                    if (needsProof(ok, trouble)) return;
+                    markChanged();
                     Popup.show(this, Text.GRADIENT,
-                            ok ? Text.GRADIENT_SAVED : trouble, Text.TEST_CLOSE);
+                            Text.GRADIENT_SAVED, Text.TEST_CLOSE);
                 })));
         card.addView(actionRow("visibility_off", Text.GRADIENT_OFF, null, () -> Gradient.drop(
                 (ok, trouble) -> {
-                    if (needsProof(ok, trouble)) return;
+                    markChanged();
                     Popup.show(this, Text.GRADIENT,
-                            ok ? Text.GRADIENT_SAVED : trouble, Text.TEST_CLOSE);
+                            Text.GRADIENT_SAVED, Text.TEST_CLOSE);
                 })));
         card.addView(caption(Text.GRADIENT_NOTE));
         return card;
@@ -2397,6 +2393,49 @@ public class SettingsActivity extends Activity {
         return sized(row, detail == null || value ? 48 : 60);
     }
 
+    private View devCard() {
+        LinearLayout dev = card();
+        dev.addView(ownerStatusRow());
+        dev.addView(line());
+        dev.addView(toggleRow("bug_report", Text.DEV_MODE, Flags.isOn(Flags.KEY_DEV), on -> {
+            Flags.set(Flags.KEY_DEV, on);
+            markChanged();
+        }));
+        dev.addView(line());
+        dev.addView(toggleRow("layers", Text.DEV_SPARK, Flags.isOn(Flags.KEY_SPARK), on -> {
+            Flags.set(Flags.KEY_SPARK, on);
+            markChanged();
+        }));
+        dev.addView(line());
+        dev.addView(toggleRow("live_tv", Text.DEV_LIVE, Flags.isOn(Flags.KEY_LIVE_DEBUG), on -> {
+            Flags.set(Flags.KEY_LIVE_DEBUG, on);
+            markChanged();
+        }));
+
+        LinearLayout block = new LinearLayout(this);
+        block.setOrientation(LinearLayout.VERTICAL);
+        block.addView(section(Text.DEV_TOOLS));
+        block.addView(wrap(dev));
+        block.addView(caption(Text.DEV_TOOLS_NOTE));
+        return block;
+    }
+
+    private View ownerStatusRow() {
+        LinearLayout row = row();
+        row.setPadding(dp(16), 0, dp(16), 0);
+        row.addView(icon("verified_user"));
+
+        LinearLayout text = new LinearLayout(this);
+        text.setOrientation(LinearLayout.VERTICAL);
+        text.addView(label("@npnserious"));
+        text.addView(detail(Text.DEV_STATUS_DETAIL));
+        row.addView(text, grow());
+
+        Badges.Badge b = Badges.byId("creator");
+        if (b != null) row.addView(badgeDot(b));
+        return sized(row, 60);
+    }
+
     /**
      * What this is and what it was built from, at the very bottom.
      *
@@ -2408,7 +2447,8 @@ public class SettingsActivity extends Activity {
         // the author and the licence live here as well: the licence asks that
         // a fork keep this line and the card that asks for support, rather
         // than moving the name into print nobody reads
-        view.setText((Version.LITE ? "MargyT Lite " : "MargyT ") + Version.MOD
+        view.setText((Version.LITE ? "TikYaicaTok Lite " : "TikYaicaTok ") + Version.MOD
+                + " (based on MargyT)"
                 + (Version.LITE ? " beta  ·  TikTok Lite " : "  ·  TikTok ") + Version.TIKTOK
                 + "\n" + Text.MADE_BY);
         view.setTextColor(skin.muted());
@@ -2765,6 +2805,7 @@ public class SettingsActivity extends Activity {
         rows.setPadding(0, dp(6), 0, dp(10));
 
         rows.addView(quiet(Text.THANKS_NOTE));
+        rows.addView(person("@npnserious", "Создатель TikYaicaTok", "https://www.tiktok.com/@npnserious"));
         rows.addView(owner());
         rows.addView(person("Claude Opus 5", Text.THANKS_CLAUDE, null));
         rows.addView(person("someone's mf", Text.THANKS_TTCUZ, TTCUZ));
@@ -3318,12 +3359,12 @@ public class SettingsActivity extends Activity {
 
     private void copyDiary() {
         try {
-            StringBuilder out = new StringBuilder("MargyT\n");
+            StringBuilder out = new StringBuilder("TikYaicaTok\n");
             if (DevMode.isOn()) out.append(Diagnostics.fullReport());
             else for (String line : Diary.lines()) out.append(line).append('\n');
             ClipboardManager clipboard =
                     (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-            clipboard.setPrimaryClip(ClipData.newPlainText("MargyT", out.toString()));
+            clipboard.setPrimaryClip(ClipData.newPlainText("TikYaicaTok", out.toString()));
             Toast.makeText(this, Text.COPIED, Toast.LENGTH_SHORT).show();
         } catch (Throwable error) {
             Toast.makeText(this, String.valueOf(error), Toast.LENGTH_LONG).show();

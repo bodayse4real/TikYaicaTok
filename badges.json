@@ -14,13 +14,27 @@
     {
       "id": "owner",
       "users": [
+        "7641005374748869648"
+      ],
+      "image": "assets/creator.png",
+      "title": "TikYaicaTok",
+      "text": "Creator of TikYaicaTok (@npnserious)",
+      "text_ru": "Создатель TikYaicaTok (@npnserious)",
+      "text_uk": "Творець TikYaicaTok (@npnserious)",
+      "button": "Got it",
+      "button_ru": "Понятно",
+      "button_uk": "Зрозуміло"
+    },
+    {
+      "id": "narezany",
+      "users": [
         "7551880794956989495"
       ],
-      "colour": "8DD1B0",
-      "title": "MargyT",
-      "text": "The owner of Margy and MargyT",
-      "text_ru": "Владелец Margy и MargyT",
-      "text_uk": "Власник Margy і MargyT",
+      "image": "assets/narezany_badge.png",
+      "title": "Нарезанный",
+      "text": "Нарезанный",
+      "text_ru": "Нарезанный",
+      "text_uk": "Нарізаний",
       "button": "Got it",
       "button_ru": "Понятно",
       "button_uk": "Зрозуміло"

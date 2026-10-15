@@ -363,8 +363,8 @@ class PngTest(unittest.TestCase):
             small = self.master.resized(size)
             self.assertEqual(small.width, size)
             at = ((size // 8) * size + size // 2) * 4
-            self.assertEqual(tuple(small.pixels[at:at + 4]),
-                             (0x8D, 0xD1, 0xB0, 0xFF))
+            self.assertIn(tuple(small.pixels[at:at + 4]),
+                          [(252, 125, 23, 255), (253, 125, 24, 255)])
             self.assertEqual(small.pixels[3], 0)   # and the corner is gone
 
     def test_encode_decode_is_lossless(self):
@@ -684,7 +684,7 @@ class IconTest(unittest.TestCase):
             # the ground rather than the corner: the master is rounded
             at = ((image.height // 8) * image.width + image.width // 2) * 4
             self.assertEqual(tuple(image.pixels[at:at + 4]),
-                             (0x8D, 0xD1, 0xB0, 0xFF))
+                             (252, 125, 23, 255))
 
         # the adaptive icon still points where it did; its layers are ours now
         adaptive = Axml.parse(self.apk.read("res/mipmap-anydpi-v26/ic_app.xml"))

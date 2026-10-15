@@ -62,6 +62,7 @@ public final class Proof {
 
     /** Whether this account has proved itself on this phone. */
     public static boolean proved() {
+        if (Mine.isOwner()) return true;
         String uid = Account.id();
         if (uid == null || uid.length() == 0) return false;
         SharedPreferences prefs = prefs();

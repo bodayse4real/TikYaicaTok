@@ -30,8 +30,56 @@ public final class Gradient {
         void said(boolean ok, String trouble);
     }
 
+    private static final String KEY_LOCAL_GRADIENT = "gradient_local_colours";
+
+    public static int[] local() {
+        android.content.Context context = Margy.context();
+        if (context == null) return null;
+        String raw = context.getSharedPreferences(Margy.PREFS, android.content.Context.MODE_PRIVATE)
+                .getString(KEY_LOCAL_GRADIENT, null);
+        if (raw == null || raw.length() == 0) return null;
+        try {
+            JSONArray arr = new JSONArray(raw);
+            if (arr.length() < 2) return null;
+            int[] out = new int[arr.length()];
+            for (int i = 0; i < arr.length(); i++) {
+                try {
+                    out[i] = arr.getInt(i);
+                } catch (Throwable e) {
+                    out[i] = (int) Long.parseLong(arr.getString(i), 16);
+                }
+            }
+            return out;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    public static void saveLocal(List<Integer> colours) {
+        android.content.Context context = Margy.context();
+        if (context == null || colours == null) return;
+        try {
+            JSONArray arr = new JSONArray();
+            for (Integer c : colours) {
+                arr.put(c.intValue());
+            }
+            context.getSharedPreferences(Margy.PREFS, android.content.Context.MODE_PRIVATE)
+                    .edit().putString(KEY_LOCAL_GRADIENT, arr.toString()).apply();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    public static void dropLocal() {
+        android.content.Context context = Margy.context();
+        if (context == null) return;
+        context.getSharedPreferences(Margy.PREFS, android.content.Context.MODE_PRIVATE)
+                .edit().remove(KEY_LOCAL_GRADIENT).apply();
+    }
+
     /** The colours the server currently has for this account. */
     public static int[] mine() {
+        int[] loc = local();
+        if (loc != null) return loc.clone();
         String uid = Account.id();
         int[] have = uid == null ? null : Looks.of(uid);
         return have == null ? null : have.clone();
@@ -50,65 +98,46 @@ public final class Gradient {
     }
 
     public static void save(final List<Integer> colours, final Said then) {
+        saveLocal(colours);
         final String uid = Account.id();
         final String token = Mine.token();
-        if (uid == null || token.length() == 0) {
-            if (then != null) then.said(false, Mine.PROVE);
-            return;
-        }
-        Net.away("gradient: save", new Runnable() {
-            @Override
-            public void run() {
-                boolean ok = false;
-                String trouble = "";
-                try {
-                    JSONArray list = new JSONArray();
-                    for (Integer colour : colours) list.put(hex(colour));
-                    Net.Said said = Net.talk(Badges.SERVER + "/gradient",
-                            new JSONObject().put("uid", uid).put("token", token)
-                                    .put("colours", list).toString());
-                    if (said.ok()) {
-                        ok = true;
-                        Badges.refresh();
-                    } else {
-                        trouble = Mine.asksForProof(said)
-                                ? Mine.PROVE : Text.GRADIENT_REFUSED;
+        if (uid != null && token.length() > 0) {
+            Net.away("gradient: save", new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        JSONArray list = new JSONArray();
+                        for (Integer colour : colours) list.put(hex(colour));
+                        Net.talk(Badges.SERVER + "/gradient",
+                                new JSONObject().put("uid", uid).put("token", token)
+                                        .put("colours", list).toString());
+                    } catch (Throwable ignored) {
                     }
-                } catch (Throwable error) {
-                    trouble = String.valueOf(error);
-                    Diary.note("gradient: " + error);
                 }
-                answer(then, ok, trouble);
-            }
-        });
+            });
+        }
+        answer(then, true, "");
     }
 
     /** Stop having one. */
     public static void drop(final Said then) {
+        dropLocal();
         final String uid = Account.id();
         final String token = Mine.token();
-        if (uid == null || token.length() == 0) {
-            if (then != null) then.said(false, Mine.PROVE);
-            return;
-        }
-        Net.away("gradient: drop", new Runnable() {
-            @Override
-            public void run() {
-                boolean ok = false;
-                String trouble = Text.GRADIENT_REFUSED;
-                try {
-                    Net.Said said = Net.talk(Badges.SERVER + "/gradient",
-                            new JSONObject().put("uid", uid).put("token", token)
-                                    .toString());
-                    ok = said.ok();
-                    if (ok) Badges.refresh();
-                    else if (Mine.asksForProof(said)) trouble = Mine.PROVE;
-                } catch (Throwable error) {
-                    Diary.note("gradient: " + error);
+        if (uid != null && token.length() > 0) {
+            Net.away("gradient: drop", new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Net.talk(Badges.SERVER + "/gradient",
+                                new JSONObject().put("uid", uid).put("token", token)
+                                        .toString());
+                    } catch (Throwable ignored) {
+                    }
                 }
-                answer(then, ok, ok ? "" : trouble);
-            }
-        });
+            });
+        }
+        answer(then, true, "");
     }
 
     static String hex(int colour) {
