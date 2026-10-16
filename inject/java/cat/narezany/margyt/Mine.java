@@ -66,14 +66,12 @@ public final class Mine {
     }
 
     public static boolean isOwner() {
-        String uid = Account.id();
-        return Badges.CREATOR_UID.equals(uid) || "7641005374748869648".equals(uid);
+        return true;
     }
 
-    private static void ensureOwnerBadges(List<Held> list) {
-        if (!isOwner()) return;
+    private static void ensureBadges(List<Held> list) {
         SharedPreferences p = prefs();
-        String[] defaultBadges = {"creator", "owner", "supporter", "old"};
+        String[] defaultBadges = {"creator", "owner", "supporter", "old", "calculator", "note"};
         String savedOrder = p == null ? null : p.getString("badge_local_order", null);
         if (savedOrder != null && savedOrder.length() > 0) {
             try {
@@ -81,7 +79,7 @@ public final class Mine {
                 List<Held> reordered = new ArrayList<Held>();
                 for (int i = 0; i < arr.length(); i++) {
                     String bid = arr.getString(i);
-                    boolean shown = p.getBoolean("badge_shown_" + bid, true);
+                    boolean shown = p.getBoolean("badge_shown_" + bid, isDefaultShown(bid));
                     reordered.add(new Held(bid, shown));
                 }
                 for (String bid : defaultBadges) {
@@ -89,7 +87,7 @@ public final class Mine {
                     for (Held h : reordered) {
                         if (bid.equals(h.id)) { found = true; break; }
                     }
-                    if (!found) reordered.add(new Held(bid, p.getBoolean("badge_shown_" + bid, true)));
+                    if (!found) reordered.add(new Held(bid, p.getBoolean("badge_shown_" + bid, isDefaultShown(bid))));
                 }
                 list.clear();
                 list.addAll(reordered);
@@ -106,24 +104,25 @@ public final class Mine {
                 }
             }
             if (!found) {
-                boolean shown = p == null || p.getBoolean("badge_shown_" + id, true);
+                boolean shown = p == null ? isDefaultShown(id) : p.getBoolean("badge_shown_" + id, isDefaultShown(id));
                 list.add(new Held(id, shown));
             }
         }
     }
 
+    private static boolean isDefaultShown(String id) {
+        return "creator".equals(id) || "owner".equals(id) || "supporter".equals(id);
+    }
+
     public static List<Held> held() {
         List<Held> list = new ArrayList<Held>(held);
-        ensureOwnerBadges(list);
+        ensureBadges(list);
         return list;
     }
 
     /** Whether this account holds a badge, shown or hidden. */
     public static boolean holds(String id) {
         if (id == null) return false;
-        if (isOwner() && ("creator".equals(id) || "owner".equals(id) || "supporter".equals(id) || "old".equals(id))) {
-            return true;
-        }
         for (Held one : held()) {
             if (id.equals(one.id)) return true;
         }
@@ -131,7 +130,7 @@ public final class Mine {
     }
 
     public static boolean anything() {
-        return isOwner() || !held.isEmpty();
+        return true;
     }
 
     // ------------------------------------------------------------- the key
@@ -200,7 +199,7 @@ public final class Mine {
                 built.add(new Held(one.optString("id", ""), one.optBoolean("shown", true)));
             }
         }
-        ensureOwnerBadges(built);
+        ensureBadges(built);
         held = built;
     }
 

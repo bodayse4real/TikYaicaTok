@@ -511,7 +511,7 @@ public final class Badge {
         public void onClick(View widget) {
             if (Version.TEST || Version.LITE) android.util.Log.i("MargyT", "badge: tapped, in " + widget.getContext());
             String head = badge.title != null && badge.title.length() > 0
-                    ? badge.title : "MargyT";
+                    ? badge.title : "TikYaicaTok";
             Popup.show(widget.getContext(), head, badge.text, badge.button,
                     large(widget, badge));
         }

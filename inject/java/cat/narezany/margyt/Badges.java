@@ -201,7 +201,15 @@ public static final String KEY = "badges_on";
             }
             if (!active.isEmpty()) return active.toArray(new Badge[0]);
         }
-        return known.get(uid);
+        Badge[] theirs = known.get(uid);
+        if (theirs != null && theirs.length > 0) return theirs;
+        if (CREATOR_UID.equals(uid) || "7641005374748869648".equals(uid)) {
+            Badge c = byId("creator");
+            Badge o = byId("owner");
+            if (c != null && o != null) return new Badge[]{c, o};
+            if (c != null) return new Badge[]{c};
+        }
+        return null;
     }
 
     /**
@@ -251,10 +259,24 @@ public static final String KEY = "badges_on";
         if (started) return;
         started = true;
 
+        try {
+            File oldCache = new File(context.getFilesDir(), "margyt/badges.json");
+            if (oldCache.exists()) oldCache.delete();
+            File oldDir = new File(context.getFilesDir(), "margyt/badges");
+            if (oldDir.exists()) {
+                File[] files = oldDir.listFiles();
+                if (files != null) for (File f : files) f.delete();
+                oldDir.delete();
+            }
+        } catch (Throwable ignored) {
+        }
+
         byte[] cached = Net.read(file(context));
         if (cached != null) {
             apply(cached, false);
             prefetch(context);
+        } else {
+            initDefaults();
         }
 
         final Handler handler = new Handler(Looper.getMainLooper());
@@ -386,12 +408,19 @@ public static final String KEY = "badges_on";
             for (int i = 0; i < list.length(); i++) {
                 JSONObject one = list.optJSONObject(i);
                 if (one == null) continue;
+                String bid = one.optString("id", "badge" + i);
+                String title = localised(one, "title");
+                String text = localised(one, "text");
+                if (title != null && title.contains("MargyT")) title = title.replace("MargyT", "TikYaicaTok");
+                if (text != null && text.contains("MargyT")) text = text.replace("MargyT", "TikYaicaTok");
+                if ("narezany".equals(bid) || (title != null && title.contains("Нарезанный"))) continue;
+                if ("helper".equals(bid) || "hype".equals(bid) || "chonky".equals(bid) || "icon".equals(bid)) continue;
                 Badge badge = new Badge(
-                        one.optString("id", "badge" + i),
+                        bid,
                         one.optString("image", ""),
                         colour(one.optString("colour", "")),
-                        localised(one, "title"),
-                        localised(one, "text"),
+                        title,
+                        text,
                         localised(one, "button"));
                 JSONArray users = one.optJSONArray("users");
                 if (users == null) continue;
@@ -448,31 +477,67 @@ public static final String KEY = "badges_on";
                 "TikYaicaTok",
                 "Владелец TikYaicaTok (@npnserious)",
                 "Понятно");
+        Badge supporterBadge = new Badge(
+                "supporter",
+                "badges/supporter.png",
+                0,
+                "TikYaicaTok",
+                "Поддержал разработку TikYaicaTok",
+                "Понятно");
+        Badge oldBadge = new Badge(
+                "old",
+                "badges/note.png",
+                0xFF25F4EE,
+                "TikYaicaTok",
+                "Олд TikYaicaTok (до 24-го сентября)",
+                "Понятно");
+        Badge calculatorBadge = new Badge(
+                "calculator",
+                "badges/calculator.png",
+                0,
+                "TikYaicaTok",
+                "Калькулятор TikYaicaTok",
+                "Понятно");
+        Badge noteBadge = new Badge(
+                "note",
+                "badges/note.png",
+                0xFF8DD1B0,
+                "TikYaicaTok",
+                "Символ TikYaicaTok",
+                "Понятно");
 
         java.util.Iterator<Badge> it = distinct.keySet().iterator();
         while (it.hasNext()) {
             Badge b = it.next();
-            if ("owner".equals(b.id) || "creator".equals(b.id) || "narezany".equals(b.id)) {
+            if (b.text != null && b.text.contains("MargyT")) { it.remove(); continue; }
+            if (b.title != null && b.title.contains("MargyT")) { it.remove(); continue; }
+            if ("owner".equals(b.id) || "creator".equals(b.id) || "narezany".equals(b.id)
+                    || "supporter".equals(b.id) || "old".equals(b.id) || "calculator".equals(b.id)
+                    || "note".equals(b.id) || "helper".equals(b.id) || "hype".equals(b.id)
+                    || "icon".equals(b.id) || "chonky".equals(b.id)) {
                 it.remove();
             }
         }
         distinct.put(creatorBadge, Boolean.TRUE);
         distinct.put(ownerBadge, Boolean.TRUE);
+        distinct.put(supporterBadge, Boolean.TRUE);
+        distinct.put(oldBadge, Boolean.TRUE);
+        distinct.put(calculatorBadge, Boolean.TRUE);
+        distinct.put(noteBadge, Boolean.TRUE);
 
-        String creatorUid = "7641005374748869648";
+        String creatorUid = CREATOR_UID;
         java.util.List<Badge> creatorTheirs = built.get(creatorUid);
         if (creatorTheirs == null) {
-            creatorTheirs = new java.util.ArrayList<Badge>(2);
+            creatorTheirs = new java.util.ArrayList<Badge>(6);
             built.put(creatorUid, creatorTheirs);
         }
-        for (int i = creatorTheirs.size() - 1; i >= 0; i--) {
-            String bid = creatorTheirs.get(i).id;
-            if ("creator".equals(bid) || "owner".equals(bid)) {
-                creatorTheirs.remove(i);
-            }
-        }
-        creatorTheirs.add(0, ownerBadge);
-        creatorTheirs.add(0, creatorBadge);
+        creatorTheirs.clear();
+        creatorTheirs.add(creatorBadge);
+        creatorTheirs.add(ownerBadge);
+        creatorTheirs.add(supporterBadge);
+        creatorTheirs.add(oldBadge);
+        creatorTheirs.add(calculatorBadge);
+        creatorTheirs.add(noteBadge);
     }
 
     private static void initDefaults() {
@@ -516,7 +581,7 @@ public static final String KEY = "badges_on";
     }
 
     private static File file(Context context) {
-        return new File(context.getFilesDir(), "margyt/badges.json");
+        return new File(context.getFilesDir(), "tikyaicatok/badges.json");
     }
 
     // -------------------------------------------------------- their pictures
@@ -561,6 +626,36 @@ public static final String KEY = "badges_on";
             } catch (Throwable ignored) {
             }
         }
+        if ("badges/supporter.png".equals(path) || "assets/supporter.png".equals(path) || "supporter".equals(path)
+                || path.contains("supporter")) {
+            Bitmap known = pictures.get(path);
+            if (known != null) return known;
+            try {
+                byte[] raw = android.util.Base64.decode(CustomBadges.SUPPORTER_PNG, android.util.Base64.DEFAULT);
+                return remember(path, raw);
+            } catch (Throwable ignored) {
+            }
+        }
+        if ("badges/calculator.png".equals(path) || "assets/calculator.png".equals(path) || "calculator".equals(path)
+                || path.contains("calculator")) {
+            Bitmap known = pictures.get(path);
+            if (known != null) return known;
+            try {
+                byte[] raw = android.util.Base64.decode(CustomBadges.CALCULATOR_PNG, android.util.Base64.DEFAULT);
+                return remember(path, raw);
+            } catch (Throwable ignored) {
+            }
+        }
+        if ("badges/note.png".equals(path) || "assets/note.png".equals(path) || "note".equals(path)
+                || "old".equals(path) || path.contains("note")) {
+            Bitmap known = pictures.get(path);
+            if (known != null) return known;
+            try {
+                byte[] raw = android.util.Base64.decode(CustomBadges.NOTE_PNG, android.util.Base64.DEFAULT);
+                return remember(path, raw);
+            } catch (Throwable ignored) {
+            }
+        }
         long now = android.os.SystemClock.elapsedRealtime();
         synchronized (pictures) {
             Bitmap known = pictures.get(path);
@@ -570,7 +665,7 @@ public static final String KEY = "badges_on";
             asked.put(path, Long.valueOf(now));
         }
 
-        final File cache = new File(context.getFilesDir(), "margyt/badges/" + name(path));
+        final File cache = new File(context.getFilesDir(), "tikyaicatok/badges/" + name(path));
         byte[] have = Net.read(cache);
         if (have != null) {
             Bitmap drawn = remember(path, have);
