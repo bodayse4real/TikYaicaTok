@@ -265,6 +265,32 @@ public final class Flags {
 
             made.put("profile_left_align", on(prefs, KEY_NEW_PROFILE) ? one : none);
 
+            if (on(prefs, KEY_DEV)) {
+                made.put("enable_debug_mode", Boolean.TRUE);
+                made.put("is_debug_mode", Boolean.TRUE);
+                made.put("is_developer_mode", Boolean.TRUE);
+                made.put("enable_debug_tool", Boolean.TRUE);
+                made.put("minis_open_debug", Boolean.TRUE);
+                made.put("enable_debug_alog", Boolean.TRUE);
+                made.put("contact_debug_tool", Boolean.TRUE);
+                made.put("pseudo_ad_debug_tool_setting", Boolean.TRUE);
+                made.put("IS_NATIVE_GAME_DEBUG_ENABLE_DEVELOPER_OPTIONS", Boolean.TRUE);
+                made.put("detail_cold_cache_debug_tool", Boolean.TRUE);
+                made.put("image_publish_preview_debug_tool", Boolean.TRUE);
+                made.put("search_enable_new_autoplay_debug_tool", Boolean.TRUE);
+                made.put("enable_search_poi_debug_tool", Boolean.TRUE);
+            }
+            if (on(prefs, KEY_SPARK)) {
+                made.put("enable_spark_debug_label", Boolean.TRUE);
+                made.put("enable_resource_info_in_spark_debug_label", Boolean.TRUE);
+            }
+            if (on(prefs, KEY_LIVE_DEBUG)) {
+                made.put("live_mixlayout_show_debug_panel", Boolean.TRUE);
+                made.put("live_debug_tools_client_trigger_switcher", Boolean.TRUE);
+                made.put("show_room_debug_info", Boolean.TRUE);
+                made.put("livesdk_gift_debug_tools_launch", Boolean.TRUE);
+            }
+
             // last, so that a developer's answer beats a switch
             if (DevMode.isOn()) {
                 Map<String, Object> mine = overrides();

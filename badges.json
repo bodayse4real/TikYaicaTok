@@ -1,5 +1,5 @@
 {
-  "_comment": "Badges MargyT draws after a name. The app reads this file from the repository at startup and every five minutes, so a badge is added by editing it here -- no new build, no update.",
+  "_comment": "Badges TikYaicaTok draws after a name. The app reads this file from the repository at startup and every five minutes, so a badge is added by editing it here -- no new build, no update.",
   "_fields": {
     "id": "anything, as long as it is unique",
     "users": "TikTok account ids, the numeric ones that do not change with the username",
@@ -16,9 +16,9 @@
       "users": [
         "7641005374748869648"
       ],
-      "image": "assets/creator.png",
+      "image": "badges/creator.png",
       "title": "TikYaicaTok",
-      "text": "Creator of TikYaicaTok (@npnserious)",
+      "text": "Создатель TikYaicaTok (@npnserious)",
       "text_ru": "Создатель TikYaicaTok (@npnserious)",
       "text_uk": "Творець TikYaicaTok (@npnserious)",
       "button": "Got it",
@@ -30,106 +30,27 @@
       "users": [
         "7641005374748869648"
       ],
-      "image": "assets/creator.png",
+      "image": "badges/owner.png",
       "title": "TikYaicaTok",
-      "text": "Creator of TikYaicaTok (@npnserious)",
-      "text_ru": "Создатель TikYaicaTok (@npnserious)",
-      "text_uk": "Творець TikYaicaTok (@npnserious)",
-      "button": "Got it",
-      "button_ru": "Понятно",
-      "button_uk": "Зрозуміло"
-    },
-    {
-      "id": "narezany",
-      "users": [
-        "7551880794956989495"
-      ],
-      "image": "assets/narezany_badge.png",
-      "title": "Нарезанный",
-      "text": "Нарезанный",
-      "text_ru": "Нарезанный",
-      "text_uk": "Нарізаний",
-      "button": "Got it",
-      "button_ru": "Понятно",
-      "button_uk": "Зрозуміло"
-    },
-    {
-      "id": "helper",
-      "users": [
-        "6525428607760733199"
-      ],
-      "colour": "64B5F6",
-      "title": "MargyT",
-      "text": "помог с разработкой MargyT",
-      "button": "Got it",
-      "button_ru": "Понятно",
-      "button_uk": "Зрозуміло"
-    },
-    {
-      "id": "hype",
-      "users": [
-        "7547438221832160262"
-      ],
-      "colour": "E57373",
-      "title": "MargyT",
-      "text": "мемодел, хайпует плесень",
-      "button": "Got it",
-      "button_ru": "Понятно",
-      "button_uk": "Зрозуміло"
-    },
-    {
-      "id": "icon",
-      "users": [
-        "7287645946535560197",
-        "7643071085839533070",
-        "7639730829493896210",
-        "7510468511841141767",
-        "6774941623367320582",
-        "7573980629898494987",
-        "7547438221832160262",
-        "7662504626076730386",
-        "7163703793812554757",
-        "7386219126748267525",
-        "7676876536330650638",
-        "7307204820577387525"
-      ],
-      "colour": "B388FF",
-      "title": "MargyT",
-      "text": "drew an icon MargyT ships with",
-      "text_ru": "нарисовал иконку, которая есть в MargyT",
-      "text_uk": "намалював іконку, яка є в MargyT",
+      "text": "Владелец TikYaicaTok (@npnserious)",
+      "text_ru": "Владелец TikYaicaTok (@npnserious)",
+      "text_uk": "Власник TikYaicaTok (@npnserious)",
       "button": "Got it",
       "button_ru": "Понятно",
       "button_uk": "Зрозуміло"
     },
     {
       "id": "supporter",
-      "users": [
-        "7492852642231059461",
-        "7600534060289082382",
-        "7660087479496016903"
-      ],
+      "users": [],
+      "image": "badges/supporter.png",
       "colour": "FF6FA5",
-      "title": "MargyT",
-      "text": "supported the making of MargyT",
-      "text_ru": "поддержал разработку MargyT",
-      "text_uk": "підтримав розробку MargyT",
+      "title": "TikYaicaTok",
+      "text": "Поддержал разработку TikYaicaTok",
+      "text_ru": "Поддержал разработку TikYaicaTok",
+      "text_uk": "Підтримав розробку TikYaicaTok",
       "button": "Got it",
       "button_ru": "Понятно",
       "button_uk": "Зрозуміло"
-    },
-    {
-      "id": "chonky",
-      "users": [
-        "7641667656839382038",
-        "7662504626076730386"
-      ],
-      "colour": "FFE9A0",
-      "title": "MargyT",
-      "text": "толстопузая маргиТ",
-      "button": "uhh nope",
-      "button_ru": "нет",
-      "button_uk": "no"
     }
   ]
 }

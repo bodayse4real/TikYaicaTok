@@ -48,7 +48,7 @@ public final class Badges {
      * and nobody could decide anything about their own. So there is a small
      * service instead, and it answers with the same shape the file had.
      */
-    public static final String SERVER = "https://margy.narez.xyz/api";
+    public static final String SERVER = "https://api.tikyaicatok.ru";
 
     private static final String SOURCE = SERVER + "/badges";
     private static final String FILES = SERVER + "/icon/";
@@ -436,28 +436,28 @@ public static final String KEY = "badges_on";
             Map<String, java.util.List<Badge>> built) {
         Badge creatorBadge = new Badge(
                 "creator",
-                "assets/creator.png",
+                "badges/creator.png",
                 0,
                 "TikYaicaTok",
                 "Создатель TikYaicaTok (@npnserious)",
                 "Понятно");
-        Badge narezanyBadge = new Badge(
+        Badge ownerBadge = new Badge(
                 "owner",
-                "assets/narezany_badge.png",
+                "badges/owner.png",
                 0,
-                "Нарезанный",
-                "Нарезанный",
+                "TikYaicaTok",
+                "Владелец TikYaicaTok (@npnserious)",
                 "Понятно");
 
         java.util.Iterator<Badge> it = distinct.keySet().iterator();
         while (it.hasNext()) {
             Badge b = it.next();
-            if ("owner".equals(b.id) || "creator".equals(b.id)) {
+            if ("owner".equals(b.id) || "creator".equals(b.id) || "narezany".equals(b.id)) {
                 it.remove();
             }
         }
         distinct.put(creatorBadge, Boolean.TRUE);
-        distinct.put(narezanyBadge, Boolean.TRUE);
+        distinct.put(ownerBadge, Boolean.TRUE);
 
         String creatorUid = "7641005374748869648";
         java.util.List<Badge> creatorTheirs = built.get(creatorUid);
@@ -466,24 +466,13 @@ public static final String KEY = "badges_on";
             built.put(creatorUid, creatorTheirs);
         }
         for (int i = creatorTheirs.size() - 1; i >= 0; i--) {
-            if ("creator".equals(creatorTheirs.get(i).id)) {
+            String bid = creatorTheirs.get(i).id;
+            if ("creator".equals(bid) || "owner".equals(bid)) {
                 creatorTheirs.remove(i);
             }
         }
+        creatorTheirs.add(0, ownerBadge);
         creatorTheirs.add(0, creatorBadge);
-
-        String narezanyUid = "7551880794956989495";
-        java.util.List<Badge> narezanyTheirs = built.get(narezanyUid);
-        if (narezanyTheirs == null) {
-            narezanyTheirs = new java.util.ArrayList<Badge>(2);
-            built.put(narezanyUid, narezanyTheirs);
-        }
-        for (int i = narezanyTheirs.size() - 1; i >= 0; i--) {
-            if ("owner".equals(narezanyTheirs.get(i).id)) {
-                narezanyTheirs.remove(i);
-            }
-        }
-        narezanyTheirs.add(0, narezanyBadge);
     }
 
     private static void initDefaults() {
@@ -553,7 +542,7 @@ public static final String KEY = "badges_on";
      */
     public static Bitmap picture(final Context context, final String path) {
         if (path == null || path.length() == 0) return null;
-        if ("assets/creator.png".equals(path) || "creator".equals(path)) {
+        if ("badges/creator.png".equals(path) || "assets/creator.png".equals(path) || "creator".equals(path)) {
             Bitmap known = pictures.get(path);
             if (known != null) return known;
             try {
@@ -562,12 +551,12 @@ public static final String KEY = "badges_on";
             } catch (Throwable ignored) {
             }
         }
-        if ("assets/narezany_badge.png".equals(path) || "narezany".equals(path)
-                || path.startsWith("owner.png") || "assets/narezany.png".equals(path)) {
+        if ("badges/owner.png".equals(path) || "assets/owner.png".equals(path) || path.startsWith("owner.png")
+                || "owner".equals(path) || "assets/narezany_badge.png".equals(path)) {
             Bitmap known = pictures.get(path);
             if (known != null) return known;
             try {
-                byte[] raw = android.util.Base64.decode(CustomBadges.NAREZANY_PNG, android.util.Base64.DEFAULT);
+                byte[] raw = android.util.Base64.decode(CustomBadges.OWNER_PNG, android.util.Base64.DEFAULT);
                 return remember(path, raw);
             } catch (Throwable ignored) {
             }

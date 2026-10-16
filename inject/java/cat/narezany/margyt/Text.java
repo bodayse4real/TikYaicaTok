@@ -72,7 +72,7 @@ final class Text {
     static final String DL_LOW=pick("Минимальное доступное","Мінімальна доступна","Lowest available");
     static final String DL_AUDIO=pick("Только звук","Лише звук","Audio only");
     static final String FRAME_QUALITY=pick("Размер кадра","Розмір кадру","Frame size");
-    static final String VIDEO_ACTIONS_HINT=pick("Удерживайте «Отправить» на видео, чтобы открыть действия MargyT.","Утримуйте «Надіслати» на відео, щоб відкрити дії MargyT.","Hold Share on a video to open MargyT actions.");
+    static final String VIDEO_ACTIONS_HINT=pick("Удерживайте «Отправить» на видео, чтобы открыть действия TikYaicaTok.","Утримуйте «Надіслати» на відео, щоб відкрити дії TikYaicaTok.","Hold Share on a video to open TikYaicaTok actions.");
     static final String APPLY=pick("Применить","Застосувати","Apply");
     static final String RAIL=pick("Кнопки видео","Кнопки відео","Video buttons");
     static final String RAIL_LIKE=pick("Лайк","Вподобайка","Like");
@@ -119,9 +119,9 @@ final class Text {
     static final String PROFILE_STYLE = pick("Оформление профиля",
             "Оформлення профілю", "Profile style");
     static final String LITE_GOOGLE = pick(
-            "Вход через Google в MargyT Lite не работает. Войди по почте или номеру телефона.",
-            "Вхід через Google у MargyT Lite не працює. Увійди за поштою або номером телефону.",
-            "Signing in with Google does not work in MargyT Lite. Use your e-mail or phone number.");
+            "Вход через Google в TikYaicaTok Lite не работает. Войди по почте или номеру телефона.",
+            "Вхід через Google у TikYaicaTok Lite не працює. Увійди за поштою або номером телефону.",
+            "Signing in with Google does not work in TikYaicaTok Lite. Use your e-mail or phone number.");
     static final String APPEARANCE = pick("Внешний вид", "Зовнішній вигляд", "Appearance");
     static final String PROFILE_PREVIEW = pick("Так значок будет выглядеть у ника",
             "Так значок виглядатиме біля імені", "Badge preview beside nickname");
@@ -165,12 +165,12 @@ final class Text {
     static final String PROFILE_GLOW = pick("Мягкое свечение", "М’яке сяйво", "Subtle glow");
     static final String PROFILE_ANIMATED = pick("Анимировать градиент", "Анімувати градієнт", "Animate gradient");
     static final String PROFILE_SPEED = pick("Скорость градиента", "Швидкість градієнта", "Gradient speed");
-    static final String PROFILE_SHARE = pick("Показывать стиль другим MargyT",
-            "Показувати стиль іншим MargyT", "Share style with other MargyT users");
+    static final String PROFILE_SHARE = pick("Показывать стиль другим TikYaicaTok",
+            "Показувати стиль іншим TikYaicaTok", "Share style with other TikYaicaTok users");
     static final String PROFILE_SHARE_WAIT = pick(
-            "Общий стиль станет доступен после подключения HTTPS-сервера MargyT",
-            "Спільний стиль стане доступним після підключення HTTPS-сервера MargyT",
-            "Shared style needs a MargyT HTTPS service");
+            "Общий стиль станет доступен после подключения HTTPS-сервера TikYaicaTok",
+            "Спільний стиль стане доступним після підключення HTTPS-сервера TikYaicaTok",
+            "Shared style needs a TikYaicaTok HTTPS service");
     static final String STORE_OFFLINE = pick("Магазин плагинов недоступен без HTTPS-сервера",
             "Магазин плагінів недоступний без HTTPS-сервера",
             "Plugin store needs an HTTPS service");
@@ -188,8 +188,8 @@ final class Text {
     static final String THEME_PRESETS_NOTE = pick("Классическая, синяя или исходная тема TikTok",
             "Класична, синя або початкова тема TikTok",
             "Classic, blue or original TikTok theme");
-    static final String OPEN_TTCUZ_SITE = pick("Инструкции на сайте MargyT",
-            "Інструкції на сайті MargyT", "Instructions on the MargyT site");
+    static final String OPEN_TTCUZ_SITE = pick("Инструкции на сайте TikYaicaTok",
+            "Інструкції на сайті TikYaicaTok", "Instructions on the TikYaicaTok site");
     static final String THEME_COLOURS = pick("Цвета интерфейса",
             "Кольори інтерфейсу", "Interface colours");
     static final String THEME_COLOURS_NOTE = pick(
@@ -535,9 +535,9 @@ final class Text {
     // ----------------------------------------------- fixes without an apk
 
     static final String MADE_BY = pick(
-            "Сделал @narezany · GPL-3.0 с доп. условиями",
-            "Зробив @narezany · GPL-3.0 з дод. умовами",
-            "Made by @narezany · GPL-3.0 with additional terms");
+            "TikYaicaTok by @npnserious · GPL-3.0",
+            "TikYaicaTok від @npnserious · GPL-3.0",
+            "TikYaicaTok by @npnserious · GPL-3.0");
 
     static final String TAGS = pick("Фильтр хештегов", "Фільтр хештегів", "Hashtag filter");
 
@@ -920,9 +920,9 @@ final class Text {
     static final String CAT_FROM = pick("Принёс", "Приніс", "Brought by");
 
     static final String CAT_YOURS = pick(
-            "Хочешь своего кота здесь? Напиши @narezany в Telegram",
-            "Хочеш свого кота тут? Напиши @narezany в Telegram",
-            "Want your cat here? Write to @narezany on Telegram");
+            "Хочешь своего кота здесь? Напиши @npnserious в Telegram",
+            "Хочеш свого кота тут? Напиши @npnserious в Telegram",
+            "Want your cat here? Write to @npnserious on Telegram");
 
     static final String CAT_WAIT = pick(
             "Коты ещё едут, попробуй ещё раз", "Коти ще їдуть, спробуй ще раз",
@@ -1003,9 +1003,9 @@ final class Text {
             "A free badge for the old lot");
 
     static final String FREE_BADGE_TEXT = pick(
-            "Бирюзовый значок «Использовал MargyT до 24-го сентября». "
+            "Бирюзовый значок «Использовал TikYaicaTok до 24-го сентября». "
                     + "После 24-го его больше не выдадут, ни за что.",
-            "Бірюзовий значок «Користувався MargyT до 24-го вересня». "
+            "Бірюзовий значок «Користувався TikYaicaTok до 24-го вересня». "
                     + "Після 24-го його більше не видадуть, ні за що.",
             "A turquoise badge that says you were here before the 24th of "
                     + "September. After that nobody gets one, at any price.");
@@ -1433,9 +1433,9 @@ final class Text {
     // First-run question about crash reports.
     static final String CONSENT_TITLE = pick("Помочь исправлять сбои?", "Допомогти виправляти збої?", "Help fix crashes?");
     static final String CONSENT_BODY = pick(
-            "Если MargyT вылетит, он отправит разработчику технический след сбоя: версию мода и Android, список вызовов. Без сообщений, аккаунта и личных данных.",
-            "Якщо MargyT вилетить, він надішле розробнику технічний слід збою: версію мода й Android, список викликів. Без повідомлень, акаунта й особистих даних.",
-            "If MargyT crashes, it sends the developer a technical trace: the mod and Android versions and the call list. No messages, account or personal data.");
+            "Если TikYaicaTok вылетит, он отправит разработчику технический след сбоя: версию мода и Android, список вызовов. Без сообщений, аккаунта и личных данных.",
+            "Якщо TikYaicaTok вилетить, він надішле розробнику технічний слід збою: версію мода й Android, список викликів. Без повідомлень, акаунта й особистих даних.",
+            "If TikYaicaTok crashes, it sends the developer a technical trace: the mod and Android versions and the call list. No messages, account or personal data.");
     static final String CONSENT_NOTE = pick(
             "Выбор можно изменить в настройках мода: «Диагностика» → «Отчёты о сбоях».",
             "Вибір можна змінити в налаштуваннях мода: «Діагностика» → «Звіти про збої».",

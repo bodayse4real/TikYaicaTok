@@ -86,19 +86,18 @@ public class SettingsActivity extends Activity {
     private static boolean pending;
 
     /** Where the mod, its people and its money live. */
-    private static final String CHANNEL = "https://t.me/margytiktok";
-    private static final String FORUM = "https://t.me/margeletforum";
-    private static final String OWNER_TELEGRAM = "https://t.me/narezany";
-    private static final String OWNER_TIKTOK =
-            "https://tiktok.com/@narezany?_r=1&_t=ZT-99hPDJ26hji_";
+    private static final String CHANNEL = "https://t.me/npnserious";
+    private static final String FORUM = "https://t.me/npnserious";
+    private static final String OWNER_TELEGRAM = "https://t.me/npnserious";
+    private static final String OWNER_TIKTOK = "https://www.tiktok.com/@npnserious";
     /** Where a receipt goes: the channel's own messages, not somebody's inbox. */
-    private static final String CHANNEL_WRITE = "https://t.me/margytiktok?direct";
+    private static final String CHANNEL_WRITE = "https://t.me/npnserious";
     private static final String TTCUZ = "https://t.me/ttcuzmod";
-    private static final String GIT = "https://git.narez.xyz/narezany/MargyT";
+    private static final String GIT = "https://github.com/bodayse4real/TikYaicaTok";
     private static final String DOCS_PLUGINS =
-            "https://git.narez.xyz/narezany/MargyT/src/branch/main/docs/plugins.md";
-    private static final String YOOMONEY = "https://yoomoney.ru/to/4100118196133693";
-    private static final String CARD_NUMBER = "2204120143055305";
+            "https://github.com/bodayse4real/TikYaicaTok/blob/main/docs/plugins.md";
+    private static final String YOOMONEY = "";
+    private static final String CARD_NUMBER = "";
 
     private boolean countriesOpen;
     private boolean accentOpen;
@@ -110,6 +109,7 @@ public class SettingsActivity extends Activity {
     private boolean iconOpen;
     private ScrollView page;
     private boolean thanksOpen;
+    private static final int DEV_PAGE = 9;
     private int settingsGroup;
     private boolean mineOpen;
     private java.util.List<Mine.Held> ordering;
@@ -229,6 +229,14 @@ public class SettingsActivity extends Activity {
         if (settingsGroup == FLAGS_PAGE) {
             column.addView(title(Text.DEV_FLAGS));
             flagsPage();
+            showRestartBar();
+            restoreScroll(previousScroll);
+            return;
+        }
+        if (settingsGroup == DEV_PAGE) {
+            column.addView(title(Text.DEV_TOOLS));
+            column.addView(devCard());
+            column.addView(versions());
             showRestartBar();
             restoreScroll(previousScroll);
             return;
@@ -602,9 +610,9 @@ public class SettingsActivity extends Activity {
 
         column.addView(section(Text.LINKS));
         LinearLayout links = card();
-        links.addView(linkRow("group", Text.FORUM, "@margeletforum", FORUM));
+        links.addView(linkRow("group", Text.FORUM, "@npnserious", FORUM));
         links.addView(line());
-        links.addView(linkRow("extension", Text.SOURCE, "narezany/MargyT", GIT));
+        links.addView(linkRow("extension", Text.SOURCE, "bodayse4real/TikYaicaTok", GIT));
         column.addView(wrap(links));
 
         column.addView(section(Text.DIAGNOSTICS));
@@ -614,7 +622,7 @@ public class SettingsActivity extends Activity {
         diagnostics.addView(quiet(Diagnostics.report()));
         diagnostics.addView(line());
         diagnostics.addView(actionRow("article", Text.COPY_DIAGNOSTICS, null,
-                () -> copy("MargyT diagnostics", DevMode.isOn()
+                () -> copy("TikYaicaTok diagnostics", DevMode.isOn()
                         ? Diagnostics.fullReport() : Diagnostics.report())));
         column.addView(wrap(diagnostics));
 
@@ -1199,9 +1207,19 @@ public class SettingsActivity extends Activity {
 
         column.addView(section(Text.DONATE_STEP_PAY));
         LinearLayout pay = card();
-        pay.addView(linkRow("star", Text.YOOMONEY, Text.YOOMONEY_NOTE, YOOMONEY));
-        pay.addView(line());
-        pay.addView(cardRow());
+        boolean hasPay = false;
+        if (YOOMONEY != null && !YOOMONEY.isEmpty()) {
+            pay.addView(linkRow("star", Text.YOOMONEY, Text.YOOMONEY_NOTE, YOOMONEY));
+            hasPay = true;
+        }
+        if (CARD_NUMBER != null && !CARD_NUMBER.isEmpty()) {
+            if (hasPay) pay.addView(line());
+            pay.addView(cardRow());
+            hasPay = true;
+        }
+        if (!hasPay) {
+            pay.addView(quiet(Local.of("Реквизиты для поддержки проекта будут добавлены позже.")));
+        }
         column.addView(wrap(pay));
 
         column.addView(section(Text.DONATE_STEP_ID));
@@ -1654,7 +1672,7 @@ public class SettingsActivity extends Activity {
             Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("application/json");
-            intent.putExtra(Intent.EXTRA_TITLE, "margyt-settings.json");
+            intent.putExtra(Intent.EXTRA_TITLE, "tikyaicatok-settings.json");
             startActivityForResult(intent, CREATE_BACKUP);
         } catch (Throwable error) {
             Toast.makeText(this, String.valueOf(error), Toast.LENGTH_LONG).show();
@@ -2411,6 +2429,21 @@ public class SettingsActivity extends Activity {
             Flags.set(Flags.KEY_LIVE_DEBUG, on);
             markChanged();
         }));
+        dev.addView(line());
+        dev.addView(toggleRow("tune", Text.DEV_SWITCH, DevMode.isOn(), on -> {
+            DevMode.set(on);
+            markChanged();
+            rebuild();
+        }));
+        dev.addView(line());
+        dev.addView(actionRow("tune", Text.DEV_FLAGS, Text.DEV_FLAGS_NOTE, this::showFlags));
+        dev.addView(line());
+        dev.addView(actionRow("article", Text.DEV_FULL_REPORT, Text.DEV_FULL_NOTE,
+                () -> copy("TikYaicaTok full report", Diagnostics.fullReport())));
+        dev.addView(line());
+        dev.addView(actionRow("refresh", Local.of("Перезапустить TikTok"),
+                Local.of("Завершить процесс для применения флагов"),
+                () -> android.os.Process.killProcess(android.os.Process.myPid())));
 
         LinearLayout block = new LinearLayout(this);
         block.setOrientation(LinearLayout.VERTICAL);
@@ -2433,8 +2466,13 @@ public class SettingsActivity extends Activity {
 
         Badges.Badge b = Badges.byId("creator");
         if (b != null) row.addView(badgeDot(b));
+        row.addView(away());
+        row.setOnClickListener(v -> open(OWNER_TIKTOK));
         return sized(row, 60);
     }
+
+    private int versionTaps;
+    private long lastVersionTap;
 
     /**
      * What this is and what it was built from, at the very bottom.
@@ -2448,13 +2486,24 @@ public class SettingsActivity extends Activity {
         // a fork keep this line and the card that asks for support, rather
         // than moving the name into print nobody reads
         view.setText((Version.LITE ? "TikYaicaTok Lite " : "TikYaicaTok ") + Version.MOD
-                + " (based on MargyT)"
                 + (Version.LITE ? " beta  ·  TikTok Lite " : "  ·  TikTok ") + Version.TIKTOK
                 + "\n" + Text.MADE_BY);
         view.setTextColor(skin.muted());
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         view.setGravity(Gravity.CENTER);
         view.setPadding(dp(20), dp(24), dp(20), dp(8));
+        view.setOnClickListener(v -> {
+            long now = android.os.SystemClock.uptimeMillis();
+            versionTaps = now - lastVersionTap > 1000L ? 1 : versionTaps + 1;
+            lastVersionTap = now;
+            if (versionTaps >= 5) {
+                versionTaps = 0;
+                DevMode.set(true);
+                Toast.makeText(this, Text.DEV_ON, Toast.LENGTH_SHORT).show();
+                settingsGroup = DEV_PAGE;
+                rebuild();
+            }
+        });
         return view;
     }
 
@@ -2805,7 +2854,6 @@ public class SettingsActivity extends Activity {
         rows.setPadding(0, dp(6), 0, dp(10));
 
         rows.addView(quiet(Text.THANKS_NOTE));
-        rows.addView(person("@npnserious", "Создатель TikYaicaTok", "https://www.tiktok.com/@npnserious"));
         rows.addView(owner());
         rows.addView(person("Claude Opus 5", Text.THANKS_CLAUDE, null));
         rows.addView(person("someone's mf", Text.THANKS_TTCUZ, TTCUZ));
@@ -2822,9 +2870,8 @@ public class SettingsActivity extends Activity {
 
         rows.addView(quiet(Text.DONATE_NOTE));
 
-        rows.addView(cardRow());
-
-        rows.addView(linkRow("star", Text.YOOMONEY, Text.YOOMONEY_NOTE, YOOMONEY));
+        if (CARD_NUMBER != null && !CARD_NUMBER.isEmpty()) rows.addView(cardRow());
+        if (YOOMONEY != null && !YOOMONEY.isEmpty()) rows.addView(linkRow("star", Text.YOOMONEY, Text.YOOMONEY_NOTE, YOOMONEY));
         return rows;
     }
 
@@ -2834,15 +2881,15 @@ public class SettingsActivity extends Activity {
 
         LinearLayout text = new LinearLayout(this);
         text.setOrientation(LinearLayout.VERTICAL);
-        text.addView(label("@narezany"));
-        text.addView(detail(Text.THANKS_OWNER));
+        text.addView(label("@npnserious"));
+        text.addView(detail(Text.DEV_STATUS_DETAIL));
         row.addView(text, grow());
         row.addView(away());
 
         row.setOnClickListener(v -> {
             try {
                 new ModDialog.Builder(this, skin)
-                        .setTitle("@narezany")
+                        .setTitle("@npnserious")
                         .setItems(new CharSequence[]{"Telegram", "TikTok"}, (dialog, which) ->
                                 open(which == 0 ? OWNER_TELEGRAM : OWNER_TIKTOK))
                         .setNegativeButton(Text.CANCEL, null)
@@ -3636,7 +3683,8 @@ public class SettingsActivity extends Activity {
             case 6: return Local.of("Плагины");
             case 7: return Local.of("Друзья и чаты");
             case 8: return Text.FUN;
-            default: return "MargyT";
+            case DEV_PAGE: return Text.DEV_TOOLS;
+            default: return "TikYaicaTok";
         }
     }
 
@@ -3647,23 +3695,25 @@ public class SettingsActivity extends Activity {
                 Local.of("Скачивание, резервные копии, диагностика и журнал. Сохраните копию перед экспериментами."),
                 Local.of("Здесь находятся версия мода, обновления, журнал и участники."), Local.of("Магазин, установка и настройки плагинов. Плагины запускают дополнительный код; устанавливайте только те, которым доверяете."),
                 Local.of("Закреплённые друзья, автопродление серий и уведомления мода."),
-                Text.FUN_HELP};
+                Text.FUN_HELP,
+                Text.DEV_TOOLS_NOTE};
         Panel.with(this,skin,Local.of("Подсказки")).text(notes[Math.max(0,Math.min(notes.length-1,settingsGroup))])
                 .quiet(Local.of("Обучение"),() -> Tutorial.show(this)).primary(Local.of("Понятно"),null).show();
     }
 
     private View groupNavigation() {
         LinearLayout list = card();
-        String[] icons = {"palette", "group", "play_circle", "tune", "info", "extension", "chat", "flare"};
+        String[] icons = {"palette", "group", "play_circle", "tune", "info", "extension", "chat", "flare", "bug_report"};
         String[] notes = {Local.of("Акцент, тема и шрифты"),
                 Local.of("Значки, градиент и аккаунт"),
                 Local.of("Просмотр, кнопки, защита экрана и регион"),
                 Local.of("Скачивание, копии и диагностика"),
                 Local.of("Версия, обновления и участники"), Local.of("Магазин и установленные"),
-                Local.of("Друзья, серии и уведомления"), Text.FUN_NOTE};
+                Local.of("Друзья, серии и уведомления"), Text.FUN_NOTE,
+                Local.of("Режим разработчика, флаги TikTok, Spark и LIVE отладка")};
         // Shelf order on screen: what people touch daily first, the project itself last.
         // Lite has the shelves that have something on them for it
-        int[] shelf = Version.LITE ? new int[] {1, 3, 2, 4, 8, 5} : new int[] {1, 2, 3, 7, 4, 6, 8, 5};
+        int[] shelf = Version.LITE ? new int[] {1, 3, 2, 4, 8, 9, 5} : new int[] {1, 2, 3, 7, 4, 6, 8, 9, 5};
         for (int n = 0; n < shelf.length; n++) {
             final int i = shelf[n];
             final int chosen = i;
@@ -3689,9 +3739,10 @@ public class SettingsActivity extends Activity {
     /**
      * Which shelf a section lives on.
      * 1 look, 2 profile, 3 feed and video, 4 tools, 5 about, 6 plugins, 7 friends and chats,
-     * 8 the things that are for nothing.
+     * 8 the things that are for nothing, 9 developer tools.
      */
     private int groupOf(String section) {
+        if (section.equals(Text.DEV_TOOLS) || section.equals(Text.DEV_FLAGS)) return DEV_PAGE;
         if (section.equals(Text.FUN_DEP) || section.equals(Text.FUN_SCREAMERS)
                 || section.equals(Text.FUN_CAT)) return 8;
         if (section.equals(Text.PLUGINS)) return 6;
@@ -3735,6 +3786,7 @@ public class SettingsActivity extends Activity {
                 || section.equals(Text.DOWNLOADS) || section.equals(Text.BADGES) || section.equals(Text.ACCOUNT)
                 || section.equals(Text.FUN_SCREAMERS) || section.equals(Text.FUN_CAT)
                 || section.equals(Text.DIAGNOSTICS) || section.equals(Text.DIARY)
+                || section.equals(Text.DEV_TOOLS)
                 || section.equals(Text.THANKS) || section.equals(Text.LINKS) || section.equals(Text.CHANNEL);
     }
 
@@ -3745,8 +3797,8 @@ public class SettingsActivity extends Activity {
         if(navigating)return;
         if (searchQuery.length() > 0) { searchQuery = ""; rebuild(); }
         else if (settingsGroup != 0) {
-            // the flags are reached from the tools, so that is where back leads
-            final int to = settingsGroup == FLAGS_PAGE ? 4 : 0;
+            // the flags are reached from the tools or dev page, so that is where back leads
+            final int to = settingsGroup == FLAGS_PAGE ? DEV_PAGE : 0;
             navigating=true;Motion.navigate(column,-1f,()->{settingsGroup=to;rebuild();navigating=false;});
         }
         else finish();

@@ -625,7 +625,7 @@ class Build:
         ("glamour", "Гламурная"),
         ("tilcayo", "Толстый тилкайо"),
         ("creator", "Создатель (@npnserious)"),
-        ("narezany", "Нарезанный (@narezany)"),
+        ("tikyaicatok", "TikYaicaTok"),
     ]
 
     ICON_PACKAGE = 0x30

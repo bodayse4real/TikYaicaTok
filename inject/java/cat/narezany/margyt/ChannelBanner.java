@@ -16,7 +16,7 @@ import android.view.View;
  * title, a neon "news / updates" line and a white "Subscribe" pill. The whole card is the button.
  */
 final class ChannelBanner extends View {
-    static final String URL = "https://t.me/margytiktok";
+    static final String URL = "https://t.me/npnserious";
     /** The design is drawn on a 1107 x 356 board and scaled to the width it gets. */
     private static final float W = 1107f, H = 356f;
     private static final float[][] SPARKS = {
@@ -34,7 +34,7 @@ final class ChannelBanner extends View {
         super(context);
         setClickable(true);
         setFocusable(true);
-        setContentDescription(Text.CHANNEL_TITLE + " MargyT. " + Text.CHANNEL_NEWS_A + Text.CHANNEL_NEWS_B + ". " + Text.CHANNEL_SUBSCRIBE);
+        setContentDescription(Text.CHANNEL_TITLE + " TikYaicaTok. " + Text.CHANNEL_NEWS_A + Text.CHANNEL_NEWS_B + ". " + Text.CHANNEL_SUBSCRIBE);
         // A paper plane on a -1..1 board: the lit wing and body, and the shaded fold under them.
         plane.moveTo(-1f, 0.12f); plane.lineTo(1f, -0.78f); plane.lineTo(0.32f, 0.86f);
         plane.lineTo(-0.02f, 0.3f); plane.lineTo(-0.26f, 0.5f); plane.lineTo(-0.3f, 0.22f); plane.close();
