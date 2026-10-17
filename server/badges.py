@@ -117,8 +117,9 @@ PROOF_READS = 60
 # --------------------------------------------------------------- the store
 
 def connect():
-    db = sqlite3.connect(DB, timeout=10)
+    db = sqlite3.connect(DB, timeout=30)
     db.execute("PRAGMA journal_mode=WAL")
+    db.execute("PRAGMA busy_timeout=30000")
     return db
 
 
@@ -233,6 +234,7 @@ def prepare():
         if column not in owner_columns:
             db.execute("ALTER TABLE owner ADD COLUMN %s %s" % (column, kind))
     dep.prepare(db)
+    guard.prepare(db)
     db.commit()
     db.close()
     take_in_admin()

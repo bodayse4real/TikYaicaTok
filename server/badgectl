@@ -56,6 +56,11 @@ def main(argv):
         import panel
         panel.set_password(argv[2], argv[3])
         print("Admin user '%s' password set successfully." % argv[2])
+    elif what == "unlock":
+        db.execute("DELETE FROM shut")
+        db.execute("DELETE FROM knock")
+        db.commit()
+        print("All IP blocks and login attempts cleared.")
     else:
         print(__doc__.strip())
         return 1

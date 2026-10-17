@@ -57,8 +57,13 @@ OWNER = 7826361017
 TOKEN_FILE = os.path.join(HERE, "bot.txt")
 
 
-def _db():
-    db = sqlite3.connect(DB, timeout=10)
+def prepare(db=None):
+    close = False
+    if db is None:
+        db = sqlite3.connect(DB, timeout=30)
+        close = True
+    db.execute("PRAGMA journal_mode=WAL")
+    db.execute("PRAGMA busy_timeout=30000")
     db.executescript("""
         CREATE TABLE IF NOT EXISTS knock (
             who TEXT NOT NULL,
@@ -76,6 +81,14 @@ def _db():
             seen INTEGER NOT NULL
         );
     """)
+    if close:
+        db.close()
+
+
+def _db():
+    db = sqlite3.connect(DB, timeout=30)
+    db.execute("PRAGMA journal_mode=WAL")
+    db.execute("PRAGMA busy_timeout=30000")
     return db
 
 
@@ -136,8 +149,6 @@ def failed(ip, token):
         db.execute("DELETE FROM knock WHERE at < ?", (now - 2 * 86400,))
         db.execute("INSERT INTO knock (who, at) VALUES (?, ?)", (who, now))
         row = db.execute("SELECT times, at FROM shut WHERE who = ?", (who,)).fetchone()
-        # what was counted towards the last time it was shut out is spent,
-        # and is not counted towards the next
         since = max(now - WINDOW, row[1] if row else 0)
         mine = db.execute("SELECT COUNT(*) FROM knock WHERE who = ? AND at > ?",
                           (who, since)).fetchone()[0]
@@ -150,17 +161,22 @@ def failed(ip, token):
                        " ON CONFLICT(who) DO UPDATE SET until = excluded.until,"
                        " times = excluded.times, at = excluded.at",
                        (who, now + length, times + 1, now))
-            _tell("shut", "Панель MargyT: %d неверных паролей подряд с адреса %s. "
+            _tell("shut", "Панель TikYaicaTok: %d неверных паролей подряд с адреса %s. "
                           "Этому адресу вход закрыт на %s."
                   % (TRIES, ip or "?", _span(length)))
         elif everywhere == EVERYONE:
-            _tell("everyone", "Панель MargyT: пароль подбирают с разных адресов, "
+            _tell("everyone", "Панель TikYaicaTok: пароль подбирают с разных адресов, "
                               "%d неверных попыток за четверть часа. Незнакомым "
                               "браузерам вход закрыт, пока это не прекратится; "
                               "ваш браузер войдёт как обычно." % everywhere)
         db.commit()
+    except Exception as e:
+        print("guard failed warning:", e, flush=True)
     finally:
-        db.close()
+        try:
+            db.close()
+        except Exception:
+            pass
 
 
 def passed(ip, token):
@@ -169,22 +185,30 @@ def passed(ip, token):
     db = _db()
     try:
         who, known = _who(db, ip, token)
-        db.execute("DELETE FROM knock WHERE who = ?", (who,))
-        db.execute("DELETE FROM shut WHERE who = ?", (who,))
-        db.execute("DELETE FROM known WHERE seen < ?", (now - KNOWN,))
         fresh = None
-        if known:
-            db.execute("UPDATE known SET seen = ? WHERE mark = ?", (now, _mark(token)))
-        else:
-            fresh = secrets.token_hex(32)
-            db.execute("INSERT INTO known (mark, seen) VALUES (?, ?)", (_mark(fresh), now))
-            _tell("new", "Панель MargyT: вход с нового браузера, адрес %s. "
-                         "Если это не вы, смените пароль в панели: это выкинет "
-                         "всех, кто вошёл." % (ip or "?"))
-        db.commit()
+        try:
+            db.execute("DELETE FROM knock WHERE who = ?", (who,))
+            db.execute("DELETE FROM shut WHERE who = ?", (who,))
+            db.execute("DELETE FROM known WHERE seen < ?", (now - KNOWN,))
+            if known:
+                db.execute("UPDATE known SET seen = ? WHERE mark = ?", (now, _mark(token)))
+            else:
+                fresh = secrets.token_hex(32)
+                db.execute("INSERT OR REPLACE INTO known (mark, seen) VALUES (?, ?)", (_mark(fresh), now))
+                _tell("new", "Панель TikYaicaTok: вход с нового браузера, адрес %s. "
+                             "Если это не вы, смените пароль в панели: это выкинет "
+                             "всех, кто вошёл." % (ip or "?"))
+            db.commit()
+        except Exception as e:
+            print("guard passed warning:", e, flush=True)
+            if not known and not fresh:
+                fresh = secrets.token_hex(32)
         return fresh
     finally:
-        db.close()
+        try:
+            db.close()
+        except Exception:
+            pass
 
 
 def forget_everyone():

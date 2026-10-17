@@ -39,7 +39,10 @@ ROUNDS = 240000
 
 
 def store():
-    return sqlite3.connect(DB, timeout=10)
+    db = sqlite3.connect(DB, timeout=30)
+    db.execute("PRAGMA journal_mode=WAL")
+    db.execute("PRAGMA busy_timeout=30000")
+    return db
 
 
 def kept():
@@ -61,26 +64,25 @@ def hashed(password, salt):
 
 def admit(user, password):
     """Whether this name and password are the ones."""
-    row = kept()
-    if not row or not user or not password:
+    if not user or not password:
         return False
-    # the password is worked out whether or not the name is right, so how
-    # long the answer takes says nothing about which of the two was wrong
+    user = user.strip()
+    row = kept()
+    if not row:
+        return False
     right = hmac.compare_digest(hashed(password, row[1]), row[2])
-    return hmac.compare_digest(user.encode("utf-8"), row[0].encode("utf-8")) and right
+    return (user.lower() == row[0].lower()) and right
 
 
 def set_password(user, password):
     """Write a new password down as a salt and a hash, never as itself."""
+    user = user.strip()
     salt = secrets.token_hex(16)
     db = store()
-    # a new key for the cookies as well: a browser that was signed in with
-    # the old password is not still signed in with the new one
     secret = secrets.token_hex(32)
+    db.execute("DELETE FROM admin")
     db.execute("INSERT INTO admin (user, salt, hash, secret, changed)"
-               " VALUES (?,?,?,?,?) ON CONFLICT(user) DO UPDATE SET"
-               " salt = excluded.salt, hash = excluded.hash,"
-               " secret = excluded.secret, changed = excluded.changed",
+               " VALUES (?,?,?,?,?)",
                (user, salt, hashed(password, salt), secret, int(time.time())))
     db.commit()
     db.close()
@@ -107,18 +109,14 @@ def ticket():
 
 
 def cookie(value):
-    """The sign-in cookie, or the one that takes it away.
-
-    Never sent over plain http, never readable by a script on the page, and
-    never sent along with a request that began on somebody else's site.
-    """
-    return ("margyt=%s; Path=/; Max-Age=%d; HttpOnly; Secure; SameSite=Strict"
+    """The sign-in cookie, or the one that takes it away."""
+    return ("margyt=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Lax"
             % (value, HOURS if value else 0))
 
 
 def seen_cookie(mark):
     """What a browser keeps to be recognised by the next time it signs in."""
-    return ("margyt_seen=%s; Path=/admin; Max-Age=%d; HttpOnly; Secure; SameSite=Strict"
+    return ("margyt_seen=%s; Path=/admin; Max-Age=%d; HttpOnly; SameSite=Lax"
             % (mark, 180 * 86400))
 
 
