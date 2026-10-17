@@ -26,9 +26,13 @@ public final class Net {
     private static boolean secure(String address) {
         try {
             java.net.URI uri = new java.net.URI(address);
-            boolean okay = "https".equalsIgnoreCase(uri.getScheme())
-                    && uri.getHost() != null && uri.getUserInfo() == null;
-            if (!okay) Diary.note("network: refused non-HTTPS endpoint");
+            String scheme = uri.getScheme();
+            // The mod's own server may use plain HTTP when there is no domain
+            // for a certificate. Everything else still requires HTTPS.
+            boolean own = "http".equalsIgnoreCase(scheme) && address.startsWith("http://de-bots2.h1cloud.net");
+            boolean okay = uri.getHost() != null && uri.getUserInfo() == null
+                    && (own || "https".equalsIgnoreCase(scheme));
+            if (!okay) Diary.note("network: refused endpoint");
             return okay;
         } catch (Throwable error) {
             Diary.note("network: invalid endpoint");

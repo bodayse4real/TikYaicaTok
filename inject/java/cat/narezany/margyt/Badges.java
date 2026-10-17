@@ -48,7 +48,7 @@ public final class Badges {
      * and nobody could decide anything about their own. So there is a small
      * service instead, and it answers with the same shape the file had.
      */
-    public static final String SERVER = "https://api.tikyaicatok.ru";
+    public static final String SERVER = "http://de-bots2.h1cloud.net:25529";
 
     private static final String SOURCE = SERVER + "/badges";
     private static final String FILES = SERVER + "/icon/";

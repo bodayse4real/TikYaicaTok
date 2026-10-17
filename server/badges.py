@@ -42,6 +42,7 @@ import os
 import re
 import secrets
 import sqlite3
+import sys
 import threading
 import time
 import urllib.request
@@ -446,13 +447,13 @@ def prove(body, ip):
     elif row and fresh:
         # the one already in a bio keeps working for a while, so asking for
         # another does not strand whoever had pasted the first
-        code, holder = "margyt-" + secrets.token_hex(3), row[0]
+        code, holder = "tyt-" + secrets.token_hex(3), row[0]
         db.execute("UPDATE proofs SET code = ?, made = ?, tried = 0, last = 0,"
                    " was = ?, was_made = ?, ip = ?"
                    " WHERE uid = ? AND holder = ?",
                    (code, now, row[1], now, ip, uid, holder))
     else:
-        code, holder = "margyt-" + secrets.token_hex(3), secrets.token_hex(16)
+        code, holder = "tyt-" + secrets.token_hex(3), secrets.token_hex(16)
         spare = db.execute(
             "SELECT holder FROM proofs WHERE uid = ? ORDER BY made DESC"
             " LIMIT -1 OFFSET ?", (uid, PROOFS_EACH - 1)).fetchall()
@@ -1064,7 +1065,7 @@ def face(which):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "margyt"
+    server_version = "tikyaicatok"
     sys_version = ""
 
     #: a connection that says nothing for this long is dropped, so a socket
@@ -1510,7 +1511,11 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     prepare()
-    server = ThreadingHTTPServer(("127.0.0.1", 8080), Handler)
+    port = int(os.environ.get("PORT", os.environ.get("SERVER_PORT", 25529)))
+    if len(sys.argv) > 1 and sys.argv[1].isdigit():
+        port = int(sys.argv[1])
+    print("Serving on 0.0.0.0:%d" % port, flush=True)
+    server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     server.serve_forever()
 
 

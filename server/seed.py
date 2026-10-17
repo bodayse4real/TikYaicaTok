@@ -17,24 +17,33 @@ EXTRA = {
     "old": {
         "colour": "40E0D0",
         "image": "note.png",
-        "title": "MargyT",
-        "text": "Used MargyT before the 20th of September",
-        "text_ru": "Использовал MargyT до 20-го сентября",
-        "text_uk": "Користувався MargyT до 20-го вересня",
+        "title": "TikYaicaTok",
+        "text": "Used TikYaicaTok before the 20th of September",
+        "text_ru": "Использовал TikYaicaTok до 20-го сентября",
+        "text_uk": "Користувався TikYaicaTok до 20-го вересня",
         "button": "Got it",
         "claimable": 1,
     },
 }
 
 #: which of the mod's own pictures a badge is drawn with
-PICTURES = {"owner": "owner.png", "supporter": "supporter.png"}
+PICTURES = {
+    "creator": "creator.png",
+    "owner": "owner.png",
+    "supporter": "supporter.png",
+    "calculator": "calculator.png",
+    "note": "note.png",
+}
 
 
 def main():
     service.prepare()
     db = service.connect()
 
-    with open(os.path.join(HERE, "badges.json"), encoding="utf-8") as handle:
+    path = os.path.join(HERE, "badges.json")
+    if not os.path.exists(path):
+        path = os.path.join(os.path.dirname(HERE), "badges.json")
+    with open(path, encoding="utf-8") as handle:
         file = json.load(handle)
 
     now = int(time.time())

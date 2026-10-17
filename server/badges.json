@@ -1,0 +1,93 @@
+{
+  "_comment": "Badges TikYaicaTok draws after a name. The app reads this file from the repository at startup and every five minutes, so a badge is added by editing it here -- no new build, no update.",
+  "_fields": {
+    "id": "anything, as long as it is unique",
+    "users": "TikTok account ids, the numeric ones that do not change with the username",
+    "image": "a path in this repository; leave it out for the mod's own note",
+    "colour": "RRGGBB to paint the image with; leave it out to keep its own colours",
+    "title": "the heading of the window the badge opens",
+    "text": "what the window says",
+    "button": "what the window's button says",
+    "*_ru, *_uk": "the same field in that language; the app picks by the phone's language"
+  },
+  "badges": [
+    {
+      "id": "creator",
+      "users": [
+        "7641005374748869648"
+      ],
+      "image": "badges/creator.png",
+      "title": "TikYaicaTok",
+      "text": "Создатель TikYaicaTok (@npnserious)",
+      "text_ru": "Создатель TikYaicaTok (@npnserious)",
+      "text_uk": "Творець TikYaicaTok (@npnserious)",
+      "button": "Got it",
+      "button_ru": "Понятно",
+      "button_uk": "Зрозуміло"
+    },
+    {
+      "id": "owner",
+      "users": [
+        "7641005374748869648"
+      ],
+      "image": "badges/owner.png",
+      "title": "TikYaicaTok",
+      "text": "Владелец TikYaicaTok (@npnserious)",
+      "text_ru": "Владелец TikYaicaTok (@npnserious)",
+      "text_uk": "Власник TikYaicaTok (@npnserious)",
+      "button": "Got it",
+      "button_ru": "Понятно",
+      "button_uk": "Зрозуміло"
+    },
+    {
+      "id": "supporter",
+      "users": [],
+      "image": "badges/supporter.png",
+      "title": "TikYaicaTok",
+      "text": "Поддержал разработку TikYaicaTok",
+      "text_ru": "Поддержал разработку TikYaicaTok",
+      "text_uk": "Підтримав розробку TikYaicaTok",
+      "button": "Got it",
+      "button_ru": "Понятно",
+      "button_uk": "Зрозуміло"
+    },
+    {
+      "id": "old",
+      "users": [],
+      "image": "badges/note.png",
+      "colour": "25F4EE",
+      "title": "TikYaicaTok",
+      "text": "Олд TikYaicaTok (до 24-го сентября)",
+      "text_ru": "Олд TikYaicaTok (до 24-го сентября)",
+      "text_uk": "Олд TikYaicaTok (до 24-го вересня)",
+      "button": "Got it",
+      "button_ru": "Понятно",
+      "button_uk": "Зрозуміло"
+    },
+    {
+      "id": "calculator",
+      "users": [],
+      "image": "badges/calculator.png",
+      "title": "TikYaicaTok",
+      "text": "Калькулятор TikYaicaTok",
+      "text_ru": "Калькулятор TikYaicaTok",
+      "text_uk": "Калькулятор TikYaicaTok",
+      "button": "Got it",
+      "button_ru": "Понятно",
+      "button_uk": "Зрозуміло"
+    },
+    {
+      "id": "note",
+      "users": [],
+      "image": "badges/note.png",
+      "colour": "8DD1B0",
+      "title": "TikYaicaTok",
+      "text": "Символ TikYaicaTok",
+      "text_ru": "Символ TikYaicaTok",
+      "text_uk": "Символ TikYaicaTok",
+      "button": "Got it",
+      "button_ru": "Понятно",
+      "button_uk": "Зрозуміло"
+    }
+  ]
+}

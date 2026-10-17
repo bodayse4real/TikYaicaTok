@@ -52,6 +52,10 @@ def main(argv):
             db.execute("DELETE FROM held WHERE uid = ? AND badge = ?", (uid, argv[2]))
             print("%s no longer has %s" % (uid, argv[2]))
         db.commit()
+    elif what == "admin" and len(argv) > 3:
+        import panel
+        panel.set_password(argv[2], argv[3])
+        print("Admin user '%s' password set successfully." % argv[2])
     else:
         print(__doc__.strip())
         return 1

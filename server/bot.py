@@ -38,7 +38,7 @@ import tiktok
 TOKEN_FILE = os.path.join(HERE, "bot.txt")
 
 #: where the badge service answers, for the avatar it passes on
-SITE = "https://margy.narez.xyz"
+SITE = "https://api.tikyaicatok.ru"
 
 #: who receives an icon somebody offers
 OWNER = 7826361017
@@ -438,7 +438,7 @@ def known_face(url):
 
 
 HELP = (
-    "<b>MargyT</b>\n\n"
+    "<b>TikYaicaTok</b>\n\n"
     "<b>профиль</b> &lt;ник в тиктоке или айди&gt; — ник, аватарка и значки\n"
     "<b>иконка</b> — пришли картинку документом и свой айди, попадёт владельцу\n\n"
     "В любом чате можно написать <code>@%s ник</code> — покажет то же самое."
@@ -477,7 +477,7 @@ def handle(update):
         code = text.split("p_", 1)[1].strip()
         name = from_who.get("first_name") or from_who.get("username") or ""
         if from_who.get("id") and patcher.claim(code, from_who["id"], name):
-            return say(chat, "Готово. Возвращайся в <b>Margy Patcher</b>.")
+            return say(chat, "Готово. Возвращайся в <b>TikYaicaTok</b>.")
         return say(chat, "Этот вход уже не действует. Нажми «Войти через Telegram» "
                          "в патчере ещё раз.")
 
@@ -496,7 +496,7 @@ def handle(update):
         return say(chat, "Запомнил: это группа поддержавших.")
 
     if low in ("/start", "/help", "помощь"):
-        me = call("getMe").get("result", {}).get("username", "margyt_bot")
+        me = call("getMe").get("result", {}).get("username", "tikyaicatok_bot")
         return say(chat, HELP % me)
 
     # One name to ask about, and it is the TikTok one. A telegram name is a
@@ -506,7 +506,7 @@ def handle(update):
         which = text.split(maxsplit=1)[1].strip() if len(text.split()) > 1 else ""
         if not which:
             return say(chat, "Чей? Напиши ник в тиктоке: "
-                             "<code>профиль narezany</code>", message["message_id"])
+                             "<code>профиль npnserious</code>", message["message_id"])
         who = account(which)
         if not who:
             return say(chat, "Не нашёл такого в тиктоке.", message["message_id"])
