@@ -46,7 +46,7 @@ import java.util.Locale;
  * table -- the one thing this build refuses to do.
  */
 public class SettingsActivity extends Activity {
-    void accountAppearanceChanged(){skin=Skin.remembered(this);rebuild();}
+    void accountAppearanceChanged(){skin=Skin.mod(this);rebuild();}
 
     private Skin skin;
     private FrameLayout root;
@@ -132,7 +132,7 @@ public class SettingsActivity extends Activity {
         Margy.attach(this);
         // drawn in what TikTok's own settings were last seen wearing, which is
         // the theme when one is on: this screen is opened from that one
-        skin = Skin.remembered(this);
+        skin = Skin.mod(this);
         Unsaved.look(this);
         dressTheWindow();
         // the list may still be the one cached before this screen existed, so
@@ -194,12 +194,17 @@ public class SettingsActivity extends Activity {
 
     private void dressTheWindow() {
         try {
-            getWindow().setStatusBarColor(skin.page);
-            getWindow().setNavigationBarColor(skin.page);
-            if (!skin.dark()) {
-                getWindow().getDecorView().setSystemUiVisibility(
-                        View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            boolean hero = settingsGroup == 0 && searchQuery.length() == 0 && ModAppearance.dashboard();
+            getWindow().setStatusBarColor(hero ? Expressive.mix(ModAppearance.header(), 0xFFFFFFFF, .24f) : skin.page);
+            getWindow().setNavigationBarColor(android.os.Build.VERSION.SDK_INT >= 26 ? skin.page : 0xFF000000);
+            View decor = getWindow().getDecorView();
+            int flags = decor.getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            if (!skin.dark() && !hero) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                flags &= ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+                if (!skin.dark()) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
             }
+            decor.setSystemUiVisibility(flags);
         } catch (Throwable ignored) {
         }
     }
@@ -218,6 +223,14 @@ public class SettingsActivity extends Activity {
         sectionTargets.clear();settingTargets.clear();
         disclosureBodies.clear();disclosureArrows.clear();renderDisclosureKey=null;
         column.removeAllViews();
+        root.setBackgroundColor(skin.page);
+        dressTheWindow();
+        if (settingsGroup == 0 && searchQuery.length() == 0 && ModAppearance.dashboard()) {
+            dashboardHome();
+            showRestartBar();
+            restoreScroll(0);
+            return;
+        }
         column.addView(backArrow());
         if (settingsGroup == DONATE_PAGE) {
             column.addView(title(Text.DONATE_BANNER));
@@ -263,6 +276,7 @@ public class SettingsActivity extends Activity {
         }
 
         column.addView(section(Text.APPEARANCE));
+        column.addView(wrap(modAppearanceCard()));
         LinearLayout icons = card();
         icons.addView(iconHead());
         if (iconOpen) {
@@ -295,6 +309,7 @@ public class SettingsActivity extends Activity {
         loading.addView(actionRow("account_circle", Text.AVATAR_SHAPE,
                 AvatarShape.nameOf(AvatarShape.chosen()), this::chooseAvatarShape));
         loading.addView(line());
+        if (Version.LITE || !ModAppearance.classic()) {
         loading.addView(toggleRow("view_compact", Text.NEW_PROFILE, Flags.isOn(Flags.KEY_NEW_PROFILE),
                 on -> Flags.set(Flags.KEY_NEW_PROFILE, on)));
         loading.addView(line());
@@ -307,6 +322,9 @@ public class SettingsActivity extends Activity {
         loading.addView(toggleRow("tune", Text.MD3_PROFILE, Md3.isOn(Md3.KEY_PROFILE), on -> Md3.set(Md3.KEY_PROFILE, on)));
         loading.addView(line());
         loading.addView(toggleRow("tune", Text.MD3_INBOX, Md3.isOn(Md3.KEY_INBOX), on -> Md3.set(Md3.KEY_INBOX, on)));
+        } else {
+            loading.addView(quiet(Local.of("Капсула, новый профиль и Material 3 отключены режимом 2021. Отключите его выше, чтобы настроить современное оформление.")));
+        }
         column.addView(wrap(loading));
 
         column.addView(section(Text.THEME));
@@ -531,6 +549,16 @@ public class SettingsActivity extends Activity {
         backup.addView(actionRow("restore", Text.BACKUP_RESET, Text.BACKUP_RESET_NOTE,
                 this::pickResetGroup));
         column.addView(wrap(backup));
+
+        column.addView(section(Text.OFFLINE_GAME));
+        LinearLayout offline = card();
+        offline.addView(toggleRow("games", Text.OFFLINE_GAME_ENABLED, OfflineGameSettings.isEnabled(this),
+                on -> OfflineGameSettings.setEnabled(this, on)));
+        offline.addView(line());
+        offline.addView(toggleRow("wifi_off", Text.OFFLINE_GAME_AUTO, OfflineGameSettings.shouldShowOnNoInternet(this),
+                on -> OfflineGameSettings.setShouldShowOnNoInternet(this, on)));
+        offline.addView(caption(Text.OFFLINE_GAME_NOTE));
+        column.addView(wrap(offline));
 
         column.addView(section(Text.PLUGINS));
         LinearLayout plugins = card();
@@ -2188,12 +2216,24 @@ public class SettingsActivity extends Activity {
             Bitmap picture = pictureFor(name);
             if (picture != null) vector = new android.graphics.drawable.BitmapDrawable(getResources(), picture);
         }
+        int chosenInk = ModAppearance.iconColour(skin.muted());
+        if (ModAppearance.value(ModAppearance.ICON_STYLE, 0) == 0) {
+            ImageView plain = new ImageView(this);
+            plain.setImageDrawable(vector);
+            plain.setColorFilter(chosenInk);
+            plain.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            plain.setPadding(dp(8), dp(8), dp(8), dp(8));
+            LinearLayout.LayoutParams size = new LinearLayout.LayoutParams(dp(sizeDp), dp(sizeDp));
+            size.rightMargin = dp(12);
+            plain.setLayoutParams(size);
+            return plain;
+        }
         int accent = Accent.colour();
         int tonal = accentTonal();
-        int ink = accentInk();
+        int ink = ModAppearance.iconColour(accentInk());
         Expressive.Badge badge = toggle
                 ? new Expressive.Badge(this, shapeFor(name), vector, sizeDp,
-                        Expressive.mix(skin.card, skin.text, 0.14f), accent, skin.muted(), onAccent())
+                        Expressive.mix(skin.card, skin.text, 0.14f), accent, ModAppearance.iconColour(skin.muted()), ModAppearance.iconColour(onAccent()))
                 : new Expressive.Badge(this, shapeFor(name), vector, sizeDp, tonal, tonal, ink, ink);
         LinearLayout.LayoutParams size = new LinearLayout.LayoutParams(dp(sizeDp), dp(sizeDp));
         size.rightMargin = dp(16);
@@ -2855,8 +2895,8 @@ public class SettingsActivity extends Activity {
 
         rows.addView(quiet(Text.THANKS_NOTE));
         rows.addView(owner());
-        rows.addView(person("Claude Opus 5", Text.THANKS_CLAUDE, null));
-        rows.addView(person("someone's mf", Text.THANKS_TTCUZ, TTCUZ));
+        rows.addView(person("Claude Opus 5.5", Text.THANKS_CLAUDE, null));
+        rows.addView(person("Offline Game", Text.THANKS_OFFLINE_GAME, null));
 
         rows.addView(line());
 
@@ -3576,6 +3616,7 @@ public class SettingsActivity extends Activity {
         column.addView(section(Text.SEARCH_RESULTS));
         LinearLayout results = card();
         int found = 0;
+        found+=searchHit(results,Text.APPEARANCE,Local.of("Интерфейс в стиле 2021 Тема меню мода Главная с плитками Стиль иконок мода Цвет иконок мода Цвет иконок нижней панели Цвет шапки меню"),()->{});
         found+=searchControl(results,Text.FEED,Text.HIDE_ADS,Feed.isEnabled());
         found+=searchControl(results,Text.FEED,Text.HIDE_LIVE,Feed.hides(Feed.KEY_LIVE));
         found+=searchControl(results,Text.FEED,Text.HIDE_PHOTOS,Feed.hides(Feed.KEY_PHOTOS));
@@ -3699,6 +3740,150 @@ public class SettingsActivity extends Activity {
                 Text.DEV_TOOLS_NOTE};
         Panel.with(this,skin,Local.of("Подсказки")).text(notes[Math.max(0,Math.min(notes.length-1,settingsGroup))])
                 .quiet(Local.of("Обучение"),() -> Tutorial.show(this)).primary(Local.of("Понятно"),null).show();
+    }
+
+    // ------------------------------------------------------ TikYaicaTok dashboard
+    private void dashboardHome() {
+        LinearLayout hero = new LinearLayout(this);
+        hero.setOrientation(LinearLayout.VERTICAL);
+        hero.setGravity(Gravity.CENTER_HORIZONTAL);
+        hero.setPadding(dp(16), dp(8), dp(16), dp(38));
+        int pink = ModAppearance.header();
+        GradientDrawable gradient = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{Expressive.mix(pink, 0xFFFFFFFF, .24f), pink, Expressive.mix(pink, 0xFF9C1250, .22f)});
+        hero.setBackground(gradient);
+        LinearLayout toolbar = new LinearLayout(this);
+        toolbar.setGravity(Gravity.CENTER_VERTICAL);
+        TextView back = heroText("‹", 32); back.setGravity(Gravity.CENTER);
+        back.setContentDescription(Local.of("Назад в TikTok"));
+        back.setOnClickListener(v -> finish());
+        toolbar.addView(back, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        View space = new View(this);toolbar.addView(space, new LinearLayout.LayoutParams(0, 1, 1));
+        TextView more = heroText("⋮", 28);more.setGravity(Gravity.CENTER);
+        more.setContentDescription(Local.of("О проекте"));more.setOnClickListener(v -> openGroup(5));
+        toolbar.addView(more, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        hero.addView(toolbar, new LinearLayout.LayoutParams(-1, dp(48)));
+        TextView emblem = heroText("♪", 58);emblem.setGravity(Gravity.CENTER);
+        GradientDrawable seal = new GradientDrawable();seal.setShape(GradientDrawable.OVAL);
+        seal.setColor(0x33FFFFFF);emblem.setBackground(seal);
+        LinearLayout.LayoutParams emblemSize = new LinearLayout.LayoutParams(dp(88), dp(88));
+        emblemSize.topMargin=dp(8);emblemSize.bottomMargin=dp(12);hero.addView(emblem,emblemSize);
+        TextView brand=heroText(Version.LITE ? "TikYaicaTok Lite" : "TikYaicaTok",28);
+        brand.setGravity(Gravity.CENTER);brand.setOnClickListener(v -> developerTap());hero.addView(brand);
+        TextView version=heroText("v"+Version.MOD,14);version.setTextColor(0xDDFFFFFF);
+        version.setPadding(0,dp(6),0,0);hero.addView(version);
+        column.addView(hero,new LinearLayout.LayoutParams(-1,-2));
+
+        LinearLayout sheet=new LinearLayout(this);sheet.setOrientation(LinearLayout.VERTICAL);
+        sheet.setPadding(0,dp(12),0,dp(16));
+        GradientDrawable surface=new GradientDrawable();surface.setColor(skin.page);
+        surface.setCornerRadii(new float[]{dp(28),dp(28),dp(28),dp(28),0,0,0,0});sheet.setBackground(surface);
+        LinearLayout.LayoutParams sheetSize=new LinearLayout.LayoutParams(-1,-2);sheetSize.topMargin=-dp(22);
+        column.addView(sheet,sheetSize);
+        View handle=new View(this);GradientDrawable handleShape=new GradientDrawable();
+        handleShape.setColor(Expressive.mix(skin.page,skin.text,.16f));handleShape.setCornerRadius(dp(2));handle.setBackground(handleShape);
+        LinearLayout.LayoutParams handleSize=new LinearLayout.LayoutParams(dp(44),dp(4));
+        handleSize.gravity=Gravity.CENTER_HORIZONTAL;handleSize.bottomMargin=dp(12);sheet.addView(handle,handleSize);
+        LinearLayout top=new LinearLayout(this);top.setPadding(dp(8),0,dp(8),0);
+        top.addView(dashboardTile("language",Local.of("Регион"),() -> openSection(Text.REGION)),tileSize());
+        top.addView(dashboardTile("play_circle",Local.of("Лента"),() -> openSection(Text.FEED)),tileSize());sheet.addView(top);
+        LinearLayout bottom=new LinearLayout(this);bottom.setPadding(dp(8),0,dp(8),0);
+        bottom.addView(dashboardTile("palette",Local.of("Внешний вид"),() -> openGroup(1)),tileSize());
+        if(!Version.LITE)bottom.addView(dashboardTile("repeat",Local.of("Автопродление"),() -> openSection(Text.STREAKS)),tileSize());
+        else bottom.addView(dashboardTile("download",Text.DOWNLOADS,() -> openSection(Text.DOWNLOADS)),tileSize());
+        sheet.addView(bottom);
+        sheet.addView(caption(Local.of("Сообщество")));
+        LinearLayout community=card();
+        community.addView(actionRow("chat",Local.of("Мы в Telegram"),null,() -> open(CHANNEL)));
+        community.addView(actionRow("info",Local.of("Частые вопросы"),null,this::dashboardHelp));
+        sheet.addView(wrap(community));
+        sheet.addView(caption(Local.of("Все настройки")));
+        sheet.addView(searchBox());
+        sheet.addView(groupNavigation());
+        sheet.addView(versions());
+    }
+
+    private TextView heroText(String text,int size){
+        TextView t=new TextView(this);t.setText(text);t.setTextColor(0xFFFFFFFF);t.setTextSize(size);
+        t.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));return t;
+    }
+    private LinearLayout.LayoutParams tileSize(){
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,-2,1);
+        p.setMargins(dp(4),dp(4),dp(4),dp(4));return p;
+    }
+    private View dashboardTile(String glyph,String name,Runnable action){
+        LinearLayout tile=new LinearLayout(this);tile.setOrientation(LinearLayout.VERTICAL);
+        tile.setPadding(dp(12),dp(12),dp(12),dp(16));tile.setMinimumHeight(dp(104));
+        GradientDrawable shape=new GradientDrawable();shape.setColor(skin.card);shape.setCornerRadius(dp(20));tile.setBackground(shape);
+        ImageView image=new ImageView(this);android.graphics.drawable.Drawable d=SettingsGlyph.make(glyph,skin.muted());
+        if(d==null){Bitmap b=pictureFor(glyph);if(b!=null)d=new android.graphics.drawable.BitmapDrawable(getResources(),b);}
+        image.setImageDrawable(d);image.setColorFilter(ModAppearance.iconColour(skin.muted()));
+        tile.addView(image,new LinearLayout.LayoutParams(dp(24),dp(24)));
+        TextView text=label(name);text.setTextSize(16);text.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));
+        text.setPadding(0,dp(16),0,0);tile.addView(text);
+        tile.setContentDescription(name);tile.setOnClickListener(v -> action.run());Motion.touch(tile);return tile;
+    }
+    private void openGroup(int group){settingsGroup=group;searchQuery="";rebuild();page.scrollTo(0,0);}
+    private void openSection(String section){
+        openGroup(groupOf(section));
+        page.post(()->{
+            View target=sectionTargets.get(section);if(target==null)return;
+            int y=0;View cursor=target;
+            while(cursor!=column){y+=cursor.getTop();if(!(cursor.getParent() instanceof View))break;cursor=(View)cursor.getParent();}
+            page.smoothScrollTo(0,Math.max(0,y-dp(12)));
+        });
+    }
+    private void dashboardHelp(){
+        new ModDialog.Builder(this,skin).setTitle(Local.of("Частые вопросы"))
+            .setMessage("• Оформление → Интерфейс в стиле 2021: ровная нижняя панель, подписи под иконками и классический профиль.\n\n"
+                +"• Цвета и тема меню мода настраиваются отдельно от цветов TikTok.\n\n"
+                +"• Чтобы вернуть капсулу и современный профиль, отключите режим 2021. Ваши прежние настройки сохраняются.\n\n"
+                +"• Режим не устанавливает TikTok 2021 года. Камера, редактор и доступность вкладок зависят от исходного APK.\n\n"
+                +"• После изменения режима полностью перезапустите TikTok.")
+            .setPositiveButton(Local.of("Понятно"),null).show();
+    }
+    private LinearLayout modAppearanceCard(){
+        LinearLayout options=card();
+        if(!Version.LITE){
+            options.addView(toggleRow("tune",Local.of("Интерфейс в стиле 2021"),ModAppearance.classic(),on->{ModAppearance.classic(on);rebuildAfterSwitchAnimation();}));
+            options.addView(quiet(Local.of("Классическая нижняя панель и центрированный профиль. Камера и редактор остаются от исходного APK. После изменения перезапустите TikTok.")));
+        }
+        options.addView(actionRow("palette",Local.of("Тема меню мода"),modThemeName(),this::chooseModTheme));
+        options.addView(liveToggleRow("view_compact",Local.of("Главная с плитками"),ModAppearance.dashboard(),on->{ModAppearance.dashboard(on);}));
+        options.addView(actionRow("image",Local.of("Стиль иконок мода"),ModAppearance.value(ModAppearance.ICON_STYLE,0)==0?Local.of("Простые"):Local.of("Фигурные"),()->{
+            new ModDialog.Builder(this,skin).setTitle(Local.of("Стиль иконок мода"))
+                .setItems(new String[]{Local.of("Простые"),Local.of("Фигурные")},(dialog,which)->{ModAppearance.set(ModAppearance.ICON_STYLE,which);dialog.dismiss();rebuild();})
+                .setNegativeButton(Text.CANCEL,null).show();
+        }));
+        options.addView(actionRow("palette",Local.of("Цвет иконок мода"),modColourName(ModAppearance.ICON_COLOUR),()->chooseModColour(ModAppearance.ICON_COLOUR,Local.of("Цвет иконок мода"))));
+        if(!Version.LITE)options.addView(actionRow("palette",Local.of("Цвет иконок нижней панели"),modColourName(ModAppearance.NAV_COLOUR),()->chooseModColour(ModAppearance.NAV_COLOUR,Local.of("Цвет иконок нижней панели"))));
+        options.addView(actionRow("palette",Local.of("Цвет шапки меню"),modColourName(ModAppearance.HEADER),()->chooseModColour(ModAppearance.HEADER,Local.of("Цвет шапки меню"))));
+        return options;
+    }
+    private String modThemeName(){int theme=ModAppearance.value(ModAppearance.THEME,1);return theme==1?Local.of("Светлая"):theme==2?Local.of("Тёмная"):Local.of("Как на устройстве");}
+    private void chooseModTheme(){
+        new ModDialog.Builder(this,skin).setTitle(Local.of("Тема меню мода"))
+            .setItems(new String[]{Local.of("Как на устройстве"),Local.of("Светлая"),Local.of("Тёмная")},(dialog,which)->{
+                ModAppearance.set(ModAppearance.THEME,which);dialog.dismiss();skin=Skin.mod(this);rebuild();
+            }).setNegativeButton(Text.CANCEL,null).show();
+    }
+    private String modColourName(String key){int c=ModAppearance.value(key,0);return c==0?Local.of("По умолчанию"):String.format(Locale.US,"#%06X",c&0xFFFFFF);}
+    private void chooseModColour(String key,String title){
+        new ModDialog.Builder(this,skin).setTitle(title)
+            .setItems(new String[]{Local.of("По умолчанию"),Local.of("Выбрать цвет")},(dialog,which)->{
+                dialog.dismiss();if(which==0){ModAppearance.set(key,0);rebuild();}else customModColour(key,title);
+            }).setNegativeButton(Text.CANCEL,null).show();
+    }
+    private void customModColour(String key,String title){
+        int initial=ModAppearance.value(key,0);if(initial==0)initial=key.equals(ModAppearance.HEADER)?0xFFEF205B:skin.text;
+        LinearLayout content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);content.setPadding(dp(16),dp(8),dp(16),dp(8));
+        final AccentColourPicker picker=new AccentColourPicker(this,initial);
+        View sample=new View(this);sample.setBackgroundColor(initial);content.addView(sample,new LinearLayout.LayoutParams(-1,dp(32)));
+        picker.onColourChanged(c->sample.setBackgroundColor(c));content.addView(picker,new LinearLayout.LayoutParams(-1,dp(238)));
+        new ModDialog.Builder(this,skin).setTitle(title).setView(content)
+            .setNegativeButton(Text.CANCEL,null).setPositiveButton(android.R.string.ok,(dialog,which)->{
+                ModAppearance.set(key,picker.colour()|0xFF000000);dialog.dismiss();rebuild();
+            }).show();
     }
 
     private View groupNavigation() {

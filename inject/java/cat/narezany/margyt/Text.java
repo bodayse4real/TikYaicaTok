@@ -1112,6 +1112,24 @@ final class Text {
     static final String HIDE_ADS = pick(
             "Убирать рекламу", "Прибирати рекламу", "Drop the advertisements");
 
+    // --------------------------------------------------------- offline game
+
+    static final String OFFLINE_GAME = pick(
+            "Офлайн игра", "Офлайн гра", "Offline Game");
+
+    static final String OFFLINE_GAME_ENABLED = pick(
+            "Flappy TikTok", "Flappy TikTok", "Flappy TikTok");
+
+    static final String OFFLINE_GAME_NOTE = pick(
+            "Играйте в Flappy TikTok когда нет интернета. Отбивайте препятствия!",
+            "Грайте у Flappy TikTok коли немає інтернету. Уникайте перепон!",
+            "Play Flappy TikTok when offline. Tap to jump, avoid obstacles!");
+
+    static final String OFFLINE_GAME_AUTO = pick(
+            "Показывать при отсутствии интернета",
+            "Показувати при відсутності інтернету",
+            "Show when offline");
+
     // --------------------------------------------------------- the plugins
 
     static final String PLUGINS = pick("Плагины", "Плагіни", "Plugins");
@@ -1330,10 +1348,10 @@ final class Text {
             "Сервер не побачив код у профілі. Опис повернув.",
             "The server did not see the code on the profile. The bio is back.");
 
-    static final String THANKS_TTCUZ = pick(
-            "Автор ttcuz, часть функций пришла оттуда",
-            "Автор ttcuz, частина функцій прийшла звідти",
-            "Wrote ttcuz, where a share of the features came from");
+    static final String THANKS_OFFLINE_GAME = pick(
+            "Добавил офлайн игру Flappy TikTok",
+            "Додав офлайн гру Flappy TikTok",
+            "Added the offline Flappy TikTok mini-game");
 
     static final String DONATE = pick("Поддержать", "Підтримати", "Support the project");
 
