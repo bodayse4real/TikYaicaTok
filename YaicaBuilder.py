@@ -38,11 +38,11 @@ LOG_BG    = "#111111"
 
 # ── маленькие утилиты ────────────────────────────────────────────────────────
 
-def _btn(parent, text, cmd, color=PINK, fg=FG, **kw):
+def _btn(parent, text, cmd, color=PINK, fg=FG, padx=16, pady=8, **kw):
     b = tk.Button(parent, text=text, command=cmd,
                   bg=color, fg=fg, activebackground=PINK_DIM, activeforeground=FG,
                   relief=tk.FLAT, bd=0, cursor="hand2",
-                  padx=16, pady=8, **kw)
+                  padx=padx, pady=pady, **kw)
     b.bind("<Enter>", lambda e: b.config(bg=PINK_DIM if color == PINK else BG3))
     b.bind("<Leave>", lambda e: b.config(bg=color))
     return b
@@ -179,8 +179,8 @@ class YaicaBuilder(tk.Tk):
         self._pbar.pack(fill=tk.X, padx=20, pady=(0, 4))
 
         # ── лог ───────────────────────────────────────────────────────────────
-        log_frame = tk.Frame(self, bg=BG, padx=20, pady=(0, 12))
-        log_frame.pack(fill=tk.BOTH, expand=True)
+        log_frame = tk.Frame(self, bg=BG, padx=20)
+        log_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 12))
 
         log_label = tk.Frame(log_frame, bg=BG)
         log_label.pack(fill=tk.X)
